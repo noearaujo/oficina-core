@@ -1,4 +1,3 @@
-```md
 # Oficina SaaS
 
 Sistema de gestão para oficinas mecânicas — clientes, veículos, catálogo de itens e ordens de serviço.
@@ -12,7 +11,7 @@ Sistema de gestão para oficinas mecânicas — clientes, veículos, catálogo d
 | Framework | Nuxt 4 (SSR: false) |
 | UI | Nuxt UI v4 (Reka UI + Tailwind CSS) |
 | Validação | Zod |
-| Storage | `useStorage` (localStorage) |
+| Storage | `useStorage('data')` (localStorage) |
 | Ícones | Lucide |
 
 ---
@@ -37,10 +36,12 @@ app/
 ├── types/
 │   └── index.d.ts              # Tipos compartilhados (Cliente, Veiculo, ItemCatalogo)
 ├── components/
-│   └── dashboard/
-│       ├── SectionHeader.vue   # Título de seção (naked)
-│       ├── DataField.vue       # Campo de dados (label + valor)
-│       └── ListItem.vue        # Linha clicável (avatar/icon + texto + chevron)
+│   ├── dashboard/
+│   │   ├── SectionHeader.vue   # Título de seção (naked)
+│   │   ├── DataField.vue       # Campo de dados (label + valor)
+│   │   └── ListItem.vue        # Linha clicável (avatar/icon + texto + chevron)
+│   └── catalogo/
+│       └── ItemModal.vue       # Modal novo/editar item do catálogo
 ├── pages/
 │   ├── clientes/
 │   │   ├── index.vue           # Listagem
@@ -64,7 +65,7 @@ server/
 ├── api/
 │   ├── clientes/               # CRUD completo
 │   ├── veiculos/               # CRUD completo
-│   ├── catalogo/               # CRUD completo
+│   ├── catalogo/               # CRUD completo (sem [id].get)
 │   └── os/                     # (em desenvolvimento)
 └── utils/
     ├── clientes.ts             # Schema Zod + types
@@ -108,8 +109,10 @@ server/
 - `tipo`: `servico` | `produto`
 - `preco`: obrigatório (o que cobra)
 - `custo`: opcional (o que paga)
-- `unidade`: lista fixa (un, jogo, par, h, litro, m, kg, pca)
+- `unidade`: lista fixa (`un`, `jogo`, `par`, `h`, `litro`, `m`, `kg`, `pca`)
 - Sem quantidade, sem estoque — é referência pra preencher orçamento
+- Tipo **imutável** na edição
+- Sem página de detalhe (6 campos → modal na listagem)
 
 ---
 
@@ -129,9 +132,10 @@ server/
 | DELETE | `/api/veiculos/:id` | Exclui |
 | GET | `/api/catalogo` | Lista itens |
 | POST | `/api/catalogo` | Cria item |
-| GET | `/api/catalogo/:id` | Detalhe |
-| PUT | `/api/catalogo/:id` | Atualiza |
+| PUT | `/api/catalogo/:id` | Atualiza (preserva `tipo`) |
 | DELETE | `/api/catalogo/:id` | Exclui |
+
+> Catálogo **não** tem `GET /api/catalogo/:id` — o item já vem da listagem para o modal.
 
 ---
 
@@ -141,7 +145,7 @@ server/
 |---|---|
 | Clientes (CRUD) | ✅ |
 | Veículos (CRUD) | ✅ |
-| Catálogo de itens (CRUD) | Em desenvolvimento |
+| Catálogo de itens (CRUD) | ✅ |
 | Ordens de Serviço | Em desenvolvimento |
 | Orçamento de OS | Em desenvolvimento |
 | Estoque | Futuro |
@@ -155,5 +159,3 @@ server/
 - **`AGENTS.md`** — Convenções de código, padrões de layout, regras NUNCA/SEMPRE, checklist pra nova página. **Leia antes de desenvolver.**
 
 ---
-
-```

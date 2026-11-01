@@ -1,4 +1,3 @@
-```md
 # Oficina SaaS — Convenções de Projeto
 
 > Documento de referência para desenvolvimento e manutenção.
@@ -27,10 +26,12 @@ app/
 ├── types/
 │   └── index.d.ts
 ├── components/
-│   └── dashboard/
-│       ├── SectionHeader.vue
-│       ├── DataField.vue
-│       └── ListItem.vue
+│   ├── dashboard/
+│   │   ├── SectionHeader.vue
+│   │   ├── DataField.vue
+│   │   └── ListItem.vue
+│   └── catalogo/
+│       └── ItemModal.vue
 ├── pages/
 │   ├── clientes/
 │   │   ├── index.vue
@@ -44,6 +45,8 @@ app/
 │   │   └── [id]/
 │   │       ├── index.vue
 │   │       └── editar.vue
+│   ├── catalogo/
+│   │   └── index.vue              # listagem + modal (sem detalhe)
 │   └── os/
 │       ├── index.vue
 │       ├── novo.vue
@@ -61,15 +64,21 @@ server/
 │   │   ├── [id].get.ts
 │   │   ├── [id].put.ts
 │   │   └── [id].delete.ts
-│   └── veiculos/
+│   ├── veiculos/
+│   │   ├── index.get.ts
+│   │   ├── index.post.ts
+│   │   ├── [id].get.ts
+│   │   ├── [id].put.ts
+│   │   └── [id].delete.ts
+│   └── catalogo/
 │       ├── index.get.ts
 │       ├── index.post.ts
-│       ├── [id].get.ts
-│       ├── [id].put.ts
+│       ├── [id].put.ts            # sem [id].get.ts
 │       └── [id].delete.ts
 └── utils/
     ├── clientes.ts
-    └── veiculos.ts
+    ├── veiculos.ts
+    └── catalogo.ts
 ```
 
 **Regras:**
@@ -77,16 +86,17 @@ server/
 - Types compartilhados (usados em 2+ lugares) → `app/types/index.d.ts`
 - Types específicos de 1 página (ex: `VeiculoTabela`) → inline no `<script setup>`
 - Schemas Zod do server → `server/utils/[entidade].ts`
+- Componentes de modal por entidade → `app/components/[entidade]/`
 
 ---
 
 ## 3. Padrões de Layout
 
-### 3.1 Listagem (`/clientes`, `/veiculos`)
+### 3.1 Listagem com tabela (`/clientes`, `/veiculos`)
 
 ```text
 UDashboardPanel
-└── UDASHBOARDNavbar (título + botão "Novo X")
+└── UDashboardNavbar (título + botão "Novo X")
 └── Body:
     ├── div.flex.flex-wrap.items-center.justify-between.gap-1.5 (busca + filtros)
     ├── UAlert (apenas se error)
@@ -103,11 +113,34 @@ UDashboardPanel
 - Colunas: `accessorKey` ou `id` + `cell` com `h()`
 - Ações: `UDropdownMenu` com `UButton icon="i-lucide-ellipsis-vertical" variant="ghost"`
 
-### 3.2 Detalhe (`/clientes/[id]`, `/veiculos/[id]`)
+### 3.2 Listagem estilo members / catálogo (`/catalogo`)
 
 ```text
 UDashboardPanel
-└── UDASHBOARDNavbar (título ESTÁTICO: "Perfil do Cliente" / "Perfil do Veículo")
+└── UDashboardNavbar (título + botão "Novo item")
+└── Body:
+    └── div.mx-auto.w-full.max-w-3xl.space-y-4.sm:space-y-6
+        ├── div.flex.flex-wrap... (busca + filtro)
+        ├── UAlert (apenas se error)
+        └── UPageCard variant="subtle" :ui="{ container: 'p-0 sm:p-0 gap-y-0' }"
+            └── divide-y → linhas clicáveis (abre modal)
+```
+
+**Regras:**
+
+- Catálogo é **referência** (caderninho de preços), não entidade de ciclo de vida
+- **Sem** `UTable`, **sem** paginação, **sem** página de detalhe
+- Linha inteira clicável → abre `CatalogoItemModal` (edição)
+- Exclusão **só no modal** (botão ghost error no footer)
+- Ícones: serviço `i-lucide-wrench`, produto `i-lucide-package`
+- Wrapper `max-w-3xl` (mesmo ritmo de settings/detalhe)
+- Empty: `UEmpty` com ícone `i-lucide-package`
+
+### 3.3 Detalhe (`/clientes/[id]`, `/veiculos/[id]`)
+
+```text
+UDashboardPanel
+└── UDashboardNavbar (título ESTÁTICO: "Perfil do Cliente" / "Perfil do Veículo")
 └── Body:
     └── div.mx-auto.w-full.max-w-3xl
         ├── DashboardSectionHeader (naked: título + descrição + slot p/ ação)
@@ -125,15 +158,16 @@ UDashboardPanel
 - Espaçamento entre seções: `mb-4 sm:mb-6` (no naked)
 - Card de dados: `#header` com `UAvatar` + nome + `UBadge`
 - Campos: `DashboardDataField` (nunca HTML manual repetido)
+- Campos vazios relevantes: mostrar **"Não informado"** (não esconder com `v-if`)
 - Listas: `DashboardListItem` dentro de `divide-y divide-default`
 - Loading: `USkeleton` com `rounded-xl`
 - Error: `UEmpty` com ações (Voltar + Tentar novamente)
 
-### 3.3 Form (`/clientes/novo`, `/veiculos/novo`)
+### 3.4 Form página (`/clientes/novo`, `/veiculos/novo`)
 
 ```text
 UDashboardPanel
-└── UDASHBOARDNavbar (título: "Novo X")
+└── UDashboardNavbar (título: "Novo X")
 └── Body:
     └── div.mx-auto.w-full.max-w-3xl
         └── UForm (:schema, :state, :loading, class="space-y-4 sm:space-y-6")
@@ -155,11 +189,11 @@ UDashboardPanel
 - **NUNCA** `type="email"` no `UInput` (zod já valida)
 - Redirect: `route.query.redirect` ou `/entidade/:id`
 
-### 3.4 Edição (`/clientes/[id]/editar`, `/veiculos/[id]/editar`)
+### 3.5 Edição página (`/clientes/[id]/editar`, `/veiculos/[id]/editar`)
 
 ```text
 UDashboardPanel
-└── UDASHBOARDNavbar (título: "Editar X")
+└── UDashboardNavbar (título: "Editar X")
 └── Body:
     └── div.mx-auto.w-full.max-w-3xl
         └── UForm (:schema, :state, :loading, class="space-y-4 sm:space-y-6")
@@ -175,6 +209,28 @@ UDashboardPanel
 - Botão cancelar: `:to="/entidade/:id"` (volta pro detalhe, não pra lista)
 - `window.confirm` ao mudar tipo (PF↔PJ, carro→moto) ou proprietário
 - Redirect: `navigateTo('/entidade/:id')` (sempre volta pro detalhe)
+
+### 3.6 Modal (catálogo e futuros forms curtos)
+
+```text
+UModal
+  title + description (props nativas)
+  #body → UForm (campos)
+  #footer → ações (Excluir | Cancelar | Salvar)
+```
+
+**Regras:**
+
+| Campos | Formato |
+|---|---|
+| ≤ 6 campos, 1 seção | **Modal** na listagem |
+| ≥ 7 campos ou múltiplas seções | **Página** `/novo` e `/[id]/editar` |
+
+- Usar props `title` e `description` do `UModal` (não inventar `#header` com `<h3>`)
+- Botões de ação no `#footer` (slot recebe `{ close }`)
+- `type="submit"` no footer → `form="id-do-form"` + `:ui="{ form: 'id:...' }"` no `UForm`
+- Exclusão: `window.confirm` + botão ghost error (só na edição)
+- Tipo do catálogo: **fixo na edição** (badge na UI; PUT no server preserva o original)
 
 ---
 
@@ -246,6 +302,19 @@ defineProps<{ to: string; icon?: string; avatar?: string; title: string; subtitl
 />
 ```
 
+### `CatalogoItemModal`
+
+```vue
+<!-- app/components/catalogo/ItemModal.vue -->
+<!-- Props: open, item (ItemCatalogo | null) -->
+<!-- Emits: update:open, saved, deleted -->
+```
+
+- Criação: RadioGroup de tipo
+- Edição: tipo como badge (imutável)
+- Footer: Excluir (só edição) | Cancelar | Salvar
+- Submit via `form` id ligando footer → `UForm`
+
 ---
 
 ## 5. Convenções de Código (NUNCA / SEMPRE)
@@ -257,7 +326,7 @@ defineProps<{ to: string; icon?: string; avatar?: string; title: string; subtitl
 | `resolveComponent('UButton')` | Auto-import do Nuxt UI |
 | `class="w-full"` em `UInput`/`USelect` | `UFormField` já aplica |
 | `max-w-5xl` | Usar `max-w-3xl` |
-| `space-y-*` no wrapper de cards | Usar `mb-4 sm:mb-6` nos cards |
+| `space-y-*` no wrapper de cards de detalhe | Usar `mb-4 sm:mb-6` nos SectionHeaders |
 | `UPagination` separado | Paginação integrada ao `UTable` |
 | `<div>` manual no `#empty` | Usar `UEmpty` |
 | `USeparator` entre seções de form | Os grids já separam |
@@ -269,11 +338,18 @@ defineProps<{ to: string; icon?: string; avatar?: string; title: string; subtitl
 | `<h1>` manual no body | Navbar já tem o título |
 | `UPageCard variant="naked"` no topo de form | Redundante com navbar |
 | Botões no navbar de páginas de detalhe | Ações contextuais ficam no SectionHeader |
-| `⋮` (dropdown de ações) em navbar de detalhe | Exclusão vai pro modal de edição |
+| `⋮` (dropdown de ações) em navbar de detalhe | Exclusão vai pro modal de edição / SectionHeader |
 | `lazy: true` em `useFetch` de página principal | A lista É o conteúdo |
 | `ref="table"` + `tableApi` | Paginação integrada |
 | `formSujo` / dirty check | Não aplica (localStorage, zero custo de PUT idêntico) |
 | `UModal` para confirmação de mudança de tipo/proprietário | `window.confirm` (reversível, bloqueia ação) |
+| Inventar `#header` manual no `UModal` | Usar props `title` + `description` |
+| `type="submit"` fora do form sem `form="id"` | Não dispara o submit |
+| Página de detalhe para ≤ 6 campos | Usar modal |
+| `GET /api/catalogo/:id` | Item já vem da listagem |
+| Mudar `tipo` do item de catálogo na edição | Tipo é imutável |
+| `z.number()` puro em preço/custo no server | Usar `z.coerce.number()` (input envia string) |
+| `UTable` no catálogo | Lista members-style (referência, não gestão) |
 
 ### SEMPRE
 
@@ -295,6 +371,9 @@ defineProps<{ to: string; icon?: string; avatar?: string; title: string; subtitl
 | `window.confirm` ao mudar tipo ou proprietário | Reversível, bloqueia a ação até resposta |
 | `PUT` retorna o objeto atualizado | Consistência com POST |
 | Duplicidade no PUT exclui o próprio registro | `if (i === index) return false` |
+| Campos vazios no detalhe → "Não informado" | Layout estável, usuário vê o que falta |
+| Modal: props `title`/`description` + `#footer` nativo | Padrão Nuxt UI v4 |
+| Catálogo: linha clicável + exclusão no modal | Menos chrome, mesmo resultado |
 
 ---
 
@@ -328,16 +407,32 @@ defineProps<{ to: string; icon?: string; avatar?: string; title: string; subtitl
 └───────────────────────────────────────────────────────────────┘
 ```
 
+**Catálogo (lista members):**
+
+```text
+┌─ max-w-3xl mx-auto space-y-4 sm:space-y-6 ──────────────────┐
+│  [🔍 Busca...]                         [Filtro tipo ▾]     │
+│  ┌─ UPageCard subtle p-0 ────────────────────────────────┐ │
+│  │  (🔧) Troca de óleo          R$ 150,00            >   │ │
+│  │       Serviço · h                                     │ │
+│  │  ───────────────────────────────────────────────────  │ │
+│  │  (📦) Pastilha de freio        R$ 85,00           >   │ │
+│  │       Produto · jogo                                  │ │
+│  └───────────────────────────────────────────────────────┘ │
+└────────────────────────────────────────────────────────────┘
+```
+
 ---
 
 ## 7. Validação (Zod)
 
 ### Frontend
 
-- Schema no `<script setup>` da página
+- Schema no `<script setup>` da página (ou no modal)
 - `superRefine` para validações condicionais (PF/PJ)
 - `:state` = `reactive<z.output<typeof schema>>`
 - `UFormField name="campo"` vincula erro ao campo
+- Preço/custo: `z.coerce.number()` (input number → string)
 
 ### Server
 
@@ -345,6 +440,7 @@ defineProps<{ to: string; icon?: string; avatar?: string; title: string; subtitl
 - `safeParse` → `createError` com `statusMessage` + `data: error.flatten()`
 - `default('')` em campos opcionais (garante shape consistente)
 - Duplicidade: checar antes de criar → `409`
+- **Sempre** `z.coerce.number()` em campos numéricos vindos de form
 
 ### Regras
 
@@ -381,7 +477,7 @@ onMounted(() => {
 ```ts
 window.confirm(`Deseja realmente excluir ${nome}?`)
 → DELETE /api/entidade/:id
-→ toast success → navigateTo('/entidades')
+→ toast success → navigateTo('/entidades')  // ou refresh na listagem (catálogo)
 → catch → toast error com statusMessage
 ```
 
@@ -391,6 +487,16 @@ window.confirm(`Deseja realmente excluir ${nome}?`)
 await $fetch(`/api/entidade/${id}`, { method: 'PUT', body })
 → toast success
 → navigateTo(`/entidade/${id}`)
+```
+
+### Modal (catálogo)
+
+```ts
+abrirNovo() / abrirEdicao(item)
+→ modalOpen = true
+→ onSubmit → POST ou PUT
+→ emit('saved') → refresh() na listagem
+→ emit('update:open', false)
 ```
 
 ### Confirmação de mudança (reversível)
@@ -415,10 +521,11 @@ watch(() => state.tipo, (novoTipo) => {
 |---|---|---|
 | Loading página | `USkeleton` com `rounded-xl` | `v-if="status === 'pending'"` |
 | Error página | `UEmpty` com ações (Voltar + Retry) | `v-else-if` quando error ou entidade vazia |
-| Empty lista | `UEmpty` (título + descrição dinâmicos) | `#empty` do `UTable` |
+| Empty lista | `UEmpty` (título + descrição dinâmicos) | `#empty` do `UTable` ou dentro do card |
 | Loading sub-seção | `USkeleton` inline | Dentro do card |
 | Error sub-seção | `<p class="text-sm text-muted">` | Mensagem simples |
 | Empty sub-seção | `UEmpty` com `class="py-8"` | Dentro do card |
+| Error listagem | `UAlert` + “Tentar novamente” | Acima da tabela/lista |
 
 ---
 
@@ -436,6 +543,10 @@ watch(() => state.tipo, (novoTipo) => {
 | GET | `/api/veiculos/:id` | `Veiculo` |
 | PUT | `/api/veiculos/:id` | `Veiculo` (atualizado) |
 | DELETE | `/api/veiculos/:id` | `200` |
+| GET | `/api/catalogo` | `ItemCatalogo[]` |
+| POST | `/api/catalogo` | `ItemCatalogo` (com `id`) |
+| PUT | `/api/catalogo/:id` | `ItemCatalogo` (atualizado; `tipo` preservado) |
+| DELETE | `/api/catalogo/:id` | `{ success: true }` |
 
 ---
 
@@ -480,6 +591,16 @@ export interface Veiculo {
   quilometragem?: string | number
   chassi?: string
 }
+
+export interface ItemCatalogo {
+  id: number
+  nome: string
+  tipo: 'servico' | 'produto'
+  descricao?: string
+  preco: number
+  custo?: number
+  unidade: string
+}
 ```
 
 **Regra:** toda interface exportada aqui fica disponível globalmente (auto-import). Não precisa de `import type` nos `.vue`.
@@ -493,23 +614,25 @@ Ao criar uma nova página, verificar:
 - [ ] `UDashboardPanel` com `id` único
 - [ ] `UDashboardNavbar` com `#leading` (sidebar collapse)
 - [ ] Navbar sem botões (detalhe) ou com 1 botão primário (listagem/form)
-- [ ] Wrapper `mx-auto w-full max-w-3xl` (detalhe/form)
+- [ ] Wrapper `mx-auto w-full max-w-3xl` (detalhe/form/catálogo)
 - [ ] Loading state (`USkeleton`)
-- [ ] Error state (`UEmpty` com ações)
+- [ ] Error state (`UEmpty` ou `UAlert` + ações)
 - [ ] Empty state (`UEmpty`)
-- [ ] `mb-4 sm:mb-6` entre seções
+- [ ] `mb-4 sm:mb-6` entre seções (detalhe)
 - [ ] `DashboardSectionHeader` para títulos de seção
 - [ ] `DashboardDataField` para campos
-- [ ] `DashboardListItem` para linhas clicáveis
+- [ ] `DashboardListItem` para linhas clicáveis (quando navegação)
 - [ ] Toast com `color` (success/error/neutral)
-- [ ] `navigateTo(redirect || /entidade/:id)` após POST
+- [ ] `navigateTo(redirect || /entidade/:id)` após POST (página)
 - [ ] Types em `app/types/index.d.ts` (se compartilhado)
 - [ ] Sem `resolveComponent`, sem `w-full` manual, sem `max-w-5xl`
 - [ ] `window.confirm` ao mudar tipo/proprietário (edição)
 - [ ] PUT retorna objeto atualizado (backend)
 - [ ] Duplicidade no PUT exclui próprio registro
-- [ ] Botão "Salvar alterações" (não "Cadastrar")
-- [ ] Cancelar volta pro detalhe (não pra lista)
+- [ ] Botão "Salvar alterações" (não "Cadastrar") na edição
+- [ ] Cancelar volta pro detalhe (não pra lista) na edição
+- [ ] Form curto (≤ 6 campos) → modal; form longo → página
+- [ ] Sidebar atualizada com o novo item
 
 ---
 
@@ -517,31 +640,57 @@ Ao criar uma nova página, verificar:
 
 | Contexto | Exemplo |
 |---|---|
-| Título de página | "Perfil do Cliente", "Novo veículo" |
+| Título de página | "Perfil do Cliente", "Novo veículo", "Catálogo" |
 | Descrição de seção | "Informações pessoais e de contato." |
 | Empty state | "Nenhum veículo cadastrado." / "Cadastre seu primeiro veículo para começar." |
+| Empty catálogo | "Nenhum item cadastrado." / "Adicione itens ao catálogo para agilizar seus orçamentos." |
 | Fallback de campo | "Não informado" |
 | Toast sucesso | "Cliente cadastrado" / "O cliente foi cadastrado com sucesso." |
 | Toast erro | "Não foi possível cadastrar" / "Verifique os dados e tente novamente." |
-| Botão primário | "Cadastrar cliente", "Cadastrar veículo" |
+| Botão primário | "Cadastrar cliente", "Novo item", "Salvar" |
 | Botão secundário | "Cancelar", "Editar", "Trocar" |
-| Placeholder | "Nome completo do cliente", "000.000.000-00" |
+| Placeholder | "Nome completo do cliente", "Ex.: Troca de óleo" |
 
 ---
 
-## 14. O Que Ainda Não Existe (Roadmap)
+## 14. Sidebar
+
+Ordem sugerida:
+
+1. Home (se existir)
+2. Clientes — `i-lucide-users` → `/clientes`
+3. Veículos — `i-lucide-car` → `/veiculos`
+4. Catálogo — `i-lucide-package` → `/catalogo`
+5. OS — (quando existir)
+6. Configurações
+
+```ts
+{
+  label: 'Catálogo',
+  icon: 'i-lucide-package',
+  to: '/catalogo',
+  onSelect: () => { open.value = false }
+}
+```
+
+---
+
+## 15. O Que Ainda Não Existe (Roadmap)
 
 | Recurso | Status |
 |---|---|
 | Edição de cliente/veículo | ✅ Implementado |
+| Catálogo de produtos/serviços | ✅ Implementado |
 | `UModal` para exclusão | Futuro — substituir `window.confirm` |
-| Ordens de Serviço (OS) | Futuro — abas (Visão geral, Orçamento, Histórico) |
-| Catálogo de produtos/serviços | Futuro — base pra OS |
+| Ordens de Serviço (OS) | Em desenvolvimento — abas (Visão geral, Orçamento, Histórico) |
+| Orçamento de OS | Em desenvolvimento — usa itens do catálogo |
+| Estoque | Futuro — entidade **separada** do catálogo |
 | Multi-unidade (oficinas) | Futuro — mover rotas pra `/unidade/[id]/` |
 | CEP → auto-preencher endereço | Futuro — API ViaCEP |
 | Foto de veículo | Futuro — trocar `icon` por `:src` no `UAvatar` |
 
+**Nota:** catálogo ≠ estoque. Catálogo é referência de preço; estoque (quando existir) é quantidade/prateleira.
+
 ---
 
 *Última atualização: 01/11/2026*
-```
