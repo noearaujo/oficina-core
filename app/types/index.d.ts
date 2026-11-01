@@ -3,6 +3,51 @@ import type { AvatarProps } from '@nuxt/ui'
 export type UserStatus = 'subscribed' | 'unsubscribed' | 'bounced'
 export type SaleStatus = 'paid' | 'failed' | 'refunded'
 
+// ═══ Cliente ═══
+
+export interface Endereco {
+  cep?: string
+  logradouro?: string
+  numero?: string
+  complemento?: string
+  bairro?: string
+  cidade?: string
+  estado?: string
+}
+
+export interface Cliente {
+  id: number
+  nome: string
+  tipoPessoa: 'fisica' | 'juridica'
+  cpf?: string
+  razaoSocial?: string
+  nomeFantasia?: string
+  cnpj?: string
+  telefone?: string
+  email?: string
+  endereco?: Endereco
+}
+
+// ═══ Veículo ═══
+
+export interface Veiculo {
+  id: number
+  clienteId: number
+  tipo: string
+  marca: string
+  modelo: string
+  versao?: string
+  placa: string
+  anoFabricacao: string | number
+  anoModelo: string | number
+  cor?: string
+  combustivel?: string
+  quilometragem?: string | number
+  chassi?: string
+}
+
+// ═══ Outros ═══
+
 export interface User {
   id: number
   name: string
@@ -10,15 +55,6 @@ export interface User {
   avatar?: AvatarProps
   status: UserStatus
   location: string
-}
-
-export interface Mail {
-  id: number
-  unread?: boolean
-  from: User
-  subject: string
-  body: string
-  date: string
 }
 
 export interface Member {
