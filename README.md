@@ -1,4 +1,4 @@
-# Oficina SaaS
+# Oficina Core
 
 Sistema de gestão para oficinas mecânicas — clientes, veículos, catálogo de itens e ordens de serviço.
 
@@ -20,7 +20,7 @@ Sistema de gestão para oficinas mecânicas — clientes, veículos, catálogo d
 
 ```bash
 git clone <repo>
-cd oficina-saas
+cd oficina-core
 pnpm install
 pnpm dev
 ```
