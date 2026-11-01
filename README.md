@@ -1,64 +1,159 @@
-# Nuxt Dashboard Template
+```md
+# Oficina SaaS
 
-[![Nuxt UI](https://img.shields.io/badge/Made%20with-Nuxt%20UI-00DC82?logo=nuxt&labelColor=020420)](https://ui.nuxt.com)
+Sistema de gestão para oficinas mecânicas — clientes, veículos, catálogo de itens e ordens de serviço.
 
-Get started with the Nuxt dashboard template with multiple pages, collapsible sidebar, keyboard shortcuts, light & dark mode, command palette and more, powered by [Nuxt UI](https://ui.nuxt.com).
+---
 
-- [Live demo](https://dashboard-template.nuxt.dev/)
-- [Documentation](https://ui.nuxt.com/docs/getting-started/installation/nuxt)
+## Stack
 
-<a href="https://dashboard-template.nuxt.dev/" target="_blank">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://ui.nuxt.com/assets/templates/nuxt/dashboard-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://ui.nuxt.com/assets/templates/nuxt/dashboard-light.png">
-    <img alt="Nuxt Dashboard Template" src="https://ui.nuxt.com/assets/templates/nuxt/dashboard-light.png">
-  </picture>
-</a>
+| Item | Tecnologia |
+|---|---|
+| Framework | Nuxt 4 (SSR: false) |
+| UI | Nuxt UI v4 (Reka UI + Tailwind CSS) |
+| Validação | Zod |
+| Storage | `useStorage` (localStorage) |
+| Ícones | Lucide |
 
-> The dashboard template for Vue is on https://github.com/nuxt-ui-templates/dashboard-vue.
+---
 
-## Quick Start
-
-```bash [Terminal]
-npm create nuxt@latest -- -t ui/dashboard
-```
-
-## Deploy your own
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-name=dashboard&repository-url=https%3A%2F%2Fgithub.com%2Fnuxt-ui-templates%2Fdashboard&demo-image=https%3A%2F%2Fui.nuxt.com%2Fassets%2Ftemplates%2Fnuxt%2Fdashboard-dark.png&demo-url=https%3A%2F%2Fdashboard-template.nuxt.dev%2F&demo-title=Nuxt%20Dashboard%20Template&demo-description=A%20dashboard%20template%20with%20multi-column%20layout%20for%20building%20sophisticated%20admin%20interfaces.)
-
-## Setup
-
-Make sure to install the dependencies:
+## Como rodar
 
 ```bash
-pnpm install
+git clone <repo>
+cd oficina-saas
+npm install
+npm run dev
 ```
 
-## Development Server
+Acesse: `http://localhost:3000`
 
-Start the development server on `http://localhost:3000`:
+---
 
-```bash
-pnpm dev
+## Estrutura
+
+```
+app/
+├── types/
+│   └── index.d.ts              # Tipos compartilhados (Cliente, Veiculo, ItemCatalogo)
+├── components/
+│   └── dashboard/
+│       ├── SectionHeader.vue   # Título de seção (naked)
+│       ├── DataField.vue       # Campo de dados (label + valor)
+│       └── ListItem.vue        # Linha clicável (avatar/icon + texto + chevron)
+├── pages/
+│   ├── clientes/
+│   │   ├── index.vue           # Listagem
+│   │   ├── novo.vue            # Cadastro
+│   │   └── [id]/
+│   │       ├── index.vue       # Detalhe
+│   │       └── editar.vue      # Edição
+│   ├── veiculos/
+│   │   ├── index.vue
+│   │   ├── novo.vue
+│   │   └── [id]/
+│   │       ├── index.vue
+│   │       └── editar.vue
+│   ├── catalogo/
+│   │   └── index.vue           # Listagem + modal (novo/editar)
+│   └── os/                     # (em desenvolvimento)
+└── layouts/
+    └── default.vue
+
+server/
+├── api/
+│   ├── clientes/               # CRUD completo
+│   ├── veiculos/               # CRUD completo
+│   ├── catalogo/               # CRUD completo
+│   └── os/                     # (em desenvolvimento)
+└── utils/
+    ├── clientes.ts             # Schema Zod + types
+    ├── veiculos.ts             # Schema Zod + types
+    └── catalogo.ts             # Schema Zod + types
 ```
 
-## Production
+---
 
-Build the application for production:
+## Rotas
 
-```bash
-pnpm build
+| Rota | Página |
+|---|---|
+| `/clientes` | Listagem de clientes |
+| `/clientes/novo` | Novo cliente |
+| `/clientes/:id` | Detalhe do cliente |
+| `/clientes/:id/editar` | Editar cliente |
+| `/veiculos` | Listagem de veículos |
+| `/veiculos/novo` | Novo veículo |
+| `/veiculos/:id` | Detalhe do veículo |
+| `/veiculos/:id/editar` | Editar veículo |
+| `/catalogo` | Catálogo de itens (listagem + modal) |
+| `/os` | Ordens de serviço (em desenvolvimento) |
+
+---
+
+## Entidades
+
+### Cliente
+- `tipoPessoa`: `fisica` | `juridica`
+- Campos obrigatórios: nome (PF) / razão social + CNPJ (PJ), CPF (PF), telefone
+- Endereço opcional (CEP, logradouro, número, complemento, bairro, cidade, estado)
+
+### Veículo
+- `tipo`: carro, motocicleta, caminhonete, caminhão, van, onibus, outro
+- `placa`: formato Mercosul (ABC1D23)
+- Vinculado a um cliente (`clienteId`)
+- Campos: marca, modelo, versão, ano fab/modelo, cor, combustível, quilometragem, chassi
+
+### Item de Catálogo
+- `tipo`: `servico` | `produto`
+- `preco`: obrigatório (o que cobra)
+- `custo`: opcional (o que paga)
+- `unidade`: lista fixa (un, jogo, par, h, litro, m, kg, pca)
+- Sem quantidade, sem estoque — é referência pra preencher orçamento
+
+---
+
+## Endpoints
+
+| Método | Rota | Descrição |
+|---|---|---|
+| GET | `/api/clientes` | Lista clientes |
+| POST | `/api/clientes` | Cria cliente |
+| GET | `/api/clientes/:id` | Detalhe |
+| PUT | `/api/clientes/:id` | Atualiza |
+| DELETE | `/api/clientes/:id` | Exclui (bloqueia se houver veículos) |
+| GET | `/api/veiculos` | Lista veículos |
+| POST | `/api/veiculos` | Cria veículo |
+| GET | `/api/veiculos/:id` | Detalhe |
+| PUT | `/api/veiculos/:id` | Atualiza |
+| DELETE | `/api/veiculos/:id` | Exclui |
+| GET | `/api/catalogo` | Lista itens |
+| POST | `/api/catalogo` | Cria item |
+| GET | `/api/catalogo/:id` | Detalhe |
+| PUT | `/api/catalogo/:id` | Atualiza |
+| DELETE | `/api/catalogo/:id` | Exclui |
+
+---
+
+## Roadmap
+
+| Recurso | Status |
+|---|---|
+| Clientes (CRUD) | ✅ |
+| Veículos (CRUD) | ✅ |
+| Catálogo de itens (CRUD) | Em desenvolvimento |
+| Ordens de Serviço | Em desenvolvimento |
+| Orçamento de OS | Em desenvolvimento |
+| Estoque | Futuro |
+| Multi-unidade (oficinas) | Futuro |
+| Painel administrativo | Futuro |
+
+---
+
+## Documentação
+
+- **`AGENTS.md`** — Convenções de código, padrões de layout, regras NUNCA/SEMPRE, checklist pra nova página. **Leia antes de desenvolver.**
+
+---
+
 ```
-
-Locally preview production build:
-
-```bash
-pnpm preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
-
-## Renovate integration
-
-Install [Renovate GitHub app](https://github.com/apps/renovate/installations/select_target) on your repository and you are good to go.
