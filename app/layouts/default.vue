@@ -28,6 +28,13 @@ const links = [[{
     open.value = false
   }
 }, {
+  label: 'Catálogo',
+  icon: 'i-lucide-book-open',
+  to: '/catalogo',
+  onSelect: () => {
+    open.value = false
+  }
+}, {
   label: 'Settings',
   to: '/settings',
   icon: 'i-lucide-settings',

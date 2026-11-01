@@ -46,6 +46,18 @@ export interface Veiculo {
   chassi?: string
 }
 
+// ═══ Catálogo ═══
+
+export interface ItemCatalogo {
+  id: number
+  nome: string
+  tipo: 'servico' | 'produto'
+  descricao?: string
+  preco: number
+  custo?: number
+  unidade: string
+}   
+
 // ═══ Outros ═══
 
 export interface User {

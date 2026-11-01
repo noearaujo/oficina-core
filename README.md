@@ -22,8 +22,8 @@ Sistema de gestão para oficinas mecânicas — clientes, veículos, catálogo d
 ```bash
 git clone <repo>
 cd oficina-saas
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 Acesse: `http://localhost:3000`
