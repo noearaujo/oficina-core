@@ -24,6 +24,14 @@ export const catalogoSchema = z.object({
     z.coerce.number().int('Custo deve ser inteiro em centavos').min(0, 'Custo inválido').optional()
   ),
   unidade: z.string().trim().min(1, 'Selecione a unidade'),
+  saldoInicial: z.preprocess(
+    value => (value === '' || value === null || value === undefined ? undefined : value),
+    z.coerce.number().min(0, 'Saldo inicial inválido').optional()
+  ),
+  quantidadeMinima: z.preprocess(
+    value => (value === '' || value === null || value === undefined ? undefined : value),
+    z.coerce.number().min(0, 'Quantidade mínima inválida').optional()
+  ),
   dataCriacao: z.string().optional(),
   dataAtualizacao: z.string().optional()
 }).transform(item => ({
@@ -34,7 +42,7 @@ export const catalogoSchema = z.object({
 
 export type ItemCatalogoCadastro = z.output<typeof catalogoSchema>
 
-export type ItemCatalogo = Omit<ItemCatalogoCadastro, 'dataCriacao' | 'dataAtualizacao'> & {
+export type ItemCatalogo = Omit<ItemCatalogoCadastro, 'dataCriacao' | 'dataAtualizacao' | 'saldoInicial' | 'quantidadeMinima'> & {
   id: number
   unidadeId: number
   dataCriacao: string

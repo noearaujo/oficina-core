@@ -86,76 +86,14 @@ export async function insert<
 ): Promise<T> {
   const items = await readCollection<T>(collection)
   const nextId = items.reduce((max, item) => (item.id > max ? item.id : max), 0) + 1
-
-  const inputData = { ...data } as Record<string, unknown>
-  const saldoInicialRaw = inputData.saldoInicial ?? inputData.quantidadeAtual
-  const quantidadeMinimaRaw = inputData.quantidadeMinima
-
-  if (collection === 'catalogo') {
-    delete inputData.saldoInicial
-    delete inputData.quantidadeAtual
-    delete inputData.quantidadeMinima
-  }
-
   const record = {
-    ...inputData,
+    ...data,
     id: nextId,
     unidadeId
   } as unknown as T
 
   items.push(record)
   await writeCollection(collection, items)
-
-  // Regra PRD: ItemEstoque é 1:1 com ItemCatalogo (só tipo='produto'), criado automaticamente ao cadastrar produto
-  if (collection === 'catalogo' && inputData.tipo === 'produto') {
-    const estoqueItems = await readCollection<StorageRecord>('estoque')
-    const jaExiste = estoqueItems.some(
-      item => item.unidadeId === unidadeId && Number(item.catalogoId) === nextId
-    )
-
-    if (!jaExiste) {
-      const agora = typeof inputData.dataCriacao === 'string' ? inputData.dataCriacao : new Date().toISOString()
-      const saldoInicial = saldoInicialRaw !== undefined && saldoInicialRaw !== null && String(saldoInicialRaw) !== ''
-        ? Number(saldoInicialRaw)
-        : 0
-      const quantidadeMinima = quantidadeMinimaRaw !== undefined && quantidadeMinimaRaw !== null && String(quantidadeMinimaRaw) !== ''
-        ? Number(quantidadeMinimaRaw)
-        : undefined
-
-      const nextEstoqueId = estoqueItems.reduce((max, item) => (item.id > max ? item.id : max), 0) + 1
-      const novoEstoque: StorageRecord = {
-        id: nextEstoqueId,
-        unidadeId,
-        catalogoId: nextId,
-        quantidadeAtual: Number.isFinite(saldoInicial) ? saldoInicial : 0,
-        ...(quantidadeMinima !== undefined && Number.isFinite(quantidadeMinima) ? { quantidadeMinima } : {}),
-        dataCriacao: agora,
-        dataAtualizacao: agora
-      }
-      estoqueItems.push(novoEstoque)
-      await writeCollection('estoque', estoqueItems)
-
-      if (Number.isFinite(saldoInicial) && saldoInicial !== 0) {
-        const movimentos = await readCollection<StorageRecord>('movimentos')
-        const nextMovId = movimentos.reduce((max, item) => (item.id > max ? item.id : max), 0) + 1
-        movimentos.push({
-          id: nextMovId,
-          unidadeId,
-          catalogoId: nextId,
-          nome: String(inputData.nome || ''),
-          tipo: saldoInicial > 0 ? 'entrada' : 'saida',
-          quantidade: Math.abs(saldoInicial),
-          origem: 'manual',
-          saldoApos: saldoInicial,
-          observacao: 'Saldo inicial',
-          usuarioId: 1,
-          data: agora
-        })
-        await writeCollection('movimentos', movimentos)
-      }
-    }
-  }
-
   return record
 }
 
@@ -206,33 +144,6 @@ async function remove(
 
   items.splice(index, 1)
   await writeCollection(collection, items)
-
-  // Regra PRD: Excluir item do catálogo remove o ItemEstoque por cascade; Movimentos permanecem com catalogoId ausente
-  if (collection === 'catalogo') {
-    const estoqueItems = await readCollection<StorageRecord>('estoque')
-    const filtrados = estoqueItems.filter(
-      item => !(item.unidadeId === unidadeId && Number(item.catalogoId) === id)
-    )
-    if (filtrados.length !== estoqueItems.length) {
-      await writeCollection('estoque', filtrados)
-    }
-
-    const movimentos = await readCollection<StorageRecord>('movimentos')
-    let alterouMovimento = false
-    const movimentosAtualizados = movimentos.map((mov) => {
-      if (mov.unidadeId === unidadeId && Number(mov.catalogoId) === id) {
-        alterouMovimento = true
-        const copia = { ...mov }
-        delete copia.catalogoId
-        return copia
-      }
-      return mov
-    })
-    if (alterouMovimento) {
-      await writeCollection('movimentos', movimentosAtualizados)
-    }
-  }
-
   return true
 }
 

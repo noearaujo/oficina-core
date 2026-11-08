@@ -78,6 +78,10 @@ export interface ItemEstoque {
   id: number
   unidadeId: number
   catalogoId: number
+  nome?: string
+  nomeBusca?: string
+  sku?: string
+  unidade?: string
   quantidadeAtual: number
   quantidadeMinima?: number
   dataCriacao: string
@@ -87,9 +91,10 @@ export interface ItemEstoque {
 export interface MovimentoEstoque {
   id: number
   unidadeId: number
+  estoqueId?: number
   catalogoId?: number
   nome: string
-  tipo: 'entrada' | 'saida'
+  tipo: 'entrada' | 'saida' | 'entrada_inicial'
   quantidade: number
   origem: 'manual' | 'os_baixa' | 'os_estorno' | 'venda_baixa'
   documentoId?: number

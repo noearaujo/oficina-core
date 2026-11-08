@@ -1,5 +1,6 @@
 import { db } from '../../../../utils/storage'
 import type { ItemCatalogo } from '../../../../utils/catalogo'
+import type { ItemEstoque, MovimentoEstoque } from '../../../../utils/estoque'
 
 export default defineEventHandler(async (event) => {
   const pathname = getRequestURL(event).pathname
@@ -22,7 +23,34 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Item não encontrado' })
   }
 
-  await db.delete(unidadeId, 'catalogo', itemId)
+  await db.transaction(async () => {
+    if (item.tipo === 'produto') {
+      const estoques = await db.list<ItemEstoque>(
+        unidadeId,
+        'estoque',
+        est => Number(est.catalogoId) === itemId
+      )
+      const estoqueIds = new Set(estoques.map(est => est.id))
+
+      for (const est of estoques) {
+        await db.delete(unidadeId, 'estoque', est.id)
+      }
+
+      const movimentos = await db.list<MovimentoEstoque>(
+        unidadeId,
+        'movimentos',
+        mov =>
+          Number(mov.catalogoId) === itemId
+          || (mov.estoqueId !== undefined && estoqueIds.has(Number(mov.estoqueId)))
+      )
+
+      for (const mov of movimentos) {
+        await db.delete(unidadeId, 'movimentos', mov.id)
+      }
+    }
+
+    await db.delete(unidadeId, 'catalogo', itemId)
+  })
 
   return { success: true }
 })
