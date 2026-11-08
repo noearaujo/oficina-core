@@ -16,8 +16,8 @@ export interface Endereco {
 }
 
 export interface Cliente {
-  id: numbe
-  usuarioId: numbe
+  id: number
+  usuarioId: number
   nome: string
   nomeBusca?: string
   tipoPessoa: 'fisica' | 'juridica'
@@ -36,19 +36,19 @@ export interface Cliente {
 // ═══ Veículo ═══
 
 export interface Veiculo {
-  id: numbe
-  unidadeId: numbe
-  clienteId: numbe
+  id: number
+  unidadeId: number
+  clienteId: number
   tipo: string
   marca: string
   modelo: string
   versao?: string
   placa: string
-  anoFabricacao: string | numbe
-  anoModelo: string | numbe
+  anoFabricacao: string | number
+  anoModelo: string | number
   cor?: string
   combustivel?: string
-  quilometragem?: numbe
+  quilometragem?: number
   chassi?: string
   deletedAt?: string
   dataCriacao: string
@@ -58,24 +58,70 @@ export interface Veiculo {
 // ═══ Catálogo ═══
 
 export interface ItemCatalogo {
-  id: numbe
-  unidadeId: numbe
+  id: number
+  unidadeId: number
   nome: string
   nomeBusca?: string
   tipo: 'servico' | 'produto'
   sku?: string
   descricao?: string
-  preco: numbe
-  custo?: numbe
+  preco: number
+  custo?: number
   unidade: string
   dataCriacao: string
   dataAtualizacao: string
 }
 
+// ═══ Estoque ═══
+
+export interface ItemEstoque {
+  id: number
+  unidadeId: number
+  catalogoId: number
+  quantidadeAtual: number
+  quantidadeMinima?: number
+  dataCriacao: string
+  dataAtualizacao: string
+}
+
+export interface MovimentoEstoque {
+  id: number
+  unidadeId: number
+  catalogoId?: number
+  nome: string
+  tipo: 'entrada' | 'saida'
+  quantidade: number
+  origem: 'manual' | 'os_baixa' | 'os_estorno' | 'venda_baixa'
+  documentoId?: number
+  documentoTipo?: 'os' | 'venda'
+  itemOsId?: number
+  saldoApos: number
+  observacao?: string
+  usuarioId: number
+  data: string
+}
+
+export interface ItemEstoqueListagem extends ItemEstoque {
+  nome: string
+  nomeBusca?: string
+  tipo: 'produto'
+  sku?: string
+  descricao?: string
+  preco: number
+  custo?: number
+  unidade: string
+  repor: boolean
+  estoqueNegativo: boolean
+}
+
+export interface ItemEstoqueDetalhe extends ItemEstoqueListagem {
+  movimentos: MovimentoEstoque[]
+}
+
 // ═══ Outros ═══
 
 export interface User {
-  id: numbe
+  id: number
   name: string
   email: string
   avatar?: AvatarProps
@@ -94,7 +140,7 @@ export interface Stat {
   title: string
   icon: string
   value: number | string
-  variation: numbe
+  variation: number
   formatter?: (value: number) => string
 }
 
@@ -103,13 +149,13 @@ export interface Sale {
   date: string
   status: SaleStatus
   email: string
-  amount: numbe
+  amount: number
 }
 
 export interface Notification {
-  id: numbe
+  id: number
   unread?: boolean
-  sender: Use
+  sender: User
   body: string
   date: string
 }
