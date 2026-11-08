@@ -8,6 +8,12 @@
 - `pnpm typecheck` — Verifica tipos TypeScript (`vue-tsc`)
 - `pnpm lint` — Executa linter (ESLint)
 
+## Git
+- Commit a cada passo
+- Mensagem `[área] descrição`
+- Nunca `git add .`
+- Se quebrar, parar
+
 # Regras
 - Dinheiro: inteiro em centavos (`8500` = R$ 85,00); formatação apenas na UI via `dinheiro.ts`.
 - Datas: ISO UTC no storage; fuso da unidade e períodos exclusivamente via `server/utils/datas.ts`.
@@ -20,12 +26,29 @@
 - Espécie: pagamento em `dinheiro` exige sessão de Caixa aberta (UI desabilita + API recusa).
 - Carteiras: acesso via `server/utils/carteiras.ts`; exclusão exige A+ e bloqueia se houver sessão aberta.
 
+# Rotas
+Todas as rotas operacionais são aninhadas sob o escopo de unidade (`/unidade/[id]/`):
+- `/unidade/:id` — Dashboard da unidade
+- `/unidade/:id/clientes` — Listagem de clientes
+- `/unidade/:id/clientes/novo` — Novo cliente
+- `/unidade/:id/clientes/:id` — Detalhe do cliente
+- `/unidade/:id/clientes/:id/editar` — Editar cliente
+- `/unidade/:id/veiculos` — Listagem de veículos
+- `/unidade/:id/veiculos/novo` — Novo veículo
+- `/unidade/:id/veiculos/:id` — Detalhe do veículo
+- `/unidade/:id/veiculos/:id/editar` — Editar veículo
+- `/unidade/:id/catalogo` — Catálogo de serviços e produtos (listagem members-style + modal)
+- *(Próximos módulos do MVP)*: `/unidade/:id/estoque`, `/unidade/:id/os`, `/unidade/:id/caixas`, `/unidade/:id/carteiras`, `/unidade/:id/pdv`, `/unidade/:id/agenda`, `/unidade/:id/relatorios`, `/unidade/:id/lixeira`
+- Rotas globais/admin: `/login`, `/onboarding`, `/unidades`, `/usuarios`
+
 # Estado
 | Feature | Status |
 |---|---|
+| Storage Adapter (`server/utils/storage.ts`) | Concluído (Fase 1) |
+| Clientes, Veículos, Catálogo (API + Frontend) | Concluído em `/unidade/[id]/` (Fase 1) |
+| Dashboard (Frontend) | Concluído em `/unidade/[id]/` (Fase 1) |
+| Estoque, OS, PDV, Agenda, Caixa, Carteiras, Relatórios, Lixeira | Pendente (MVP Fase 1) |
 | Base / Template Nuxt UI (`settings/`, `index.vue`) | Fase 2 (congelado) |
-| Clientes, Veículos, Catálogo, Estoque | MVP (Fase 1) |
-| OS, PDV, Agenda, Caixa, Carteiras, Relatórios, Lixeira | MVP (Fase 1) |
 | Migração Storage File → Cloudflare D1 | Fase 2 |
 
 # Mapa
