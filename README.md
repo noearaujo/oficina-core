@@ -1,3 +1,5 @@
+> 📋 Para agentes de IA: leia `AGENTS.md` antes de desenvolver.   
+
 # Oficina Core
 
 Sistema de gestão para oficinas mecânicas — clientes, veículos, catálogo de itens e ordens de serviço.
