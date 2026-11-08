@@ -3,6 +3,10 @@ import type { TableColumn } from '@nuxt/ui'
 import type { Row } from '@tanstack/table-core'
 import { getPaginationRowModel } from '@tanstack/table-core'
 
+interface ClienteTabela extends Cliente {
+  quantidadeVeiculos?: number
+}
+
 const route = useRoute()
 const toast = useToast()
 const unidadeId = computed(() => route.path.match(/\/unidade\/([^/]+)/)?.[1] ?? String(route.params.id))
@@ -15,7 +19,7 @@ const pagination = ref({
   pageSize: 10
 })
 
-const { data, status, refresh } = await useFetch<Cliente[]>(
+const { data, status, error, refresh } = await useFetch<ClienteTabela[]>(
   () => `/api/unidade/${unidadeId.value}/clientes`,
   {
     default: () => [],
@@ -23,20 +27,45 @@ const { data, status, refresh } = await useFetch<Cliente[]>(
   }
 )
 
+function stripAccents(valor: string) {
+  return valor.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
+
 const clientesFiltrados = computed(() => {
-  const termo = busca.value.trim().toLocaleLowerCase('pt-BR')
+  const termo = stripAccents(busca.value.trim()).toLowerCase()
+  const termoDigitos = termo.replace(/\D/g, '')
 
   return data.value.filter((cliente) => {
-    const correspondeBusca =
-      !termo ||
-      cliente.nome.toLocaleLowerCase('pt-BR').includes(termo) ||
-      String(cliente.id).includes(termo) ||
-      cliente.telefone?.includes(termo) ||
-      cliente.email?.toLocaleLowerCase('pt-BR').includes(termo)
+    const nomeNormalizado = cliente.nomeBusca || stripAccents(cliente.nome).toLowerCase()
+    const razaoNormalizada = stripAccents(cliente.razaoSocial || '').toLowerCase()
+    const fantasiaNormalizada = stripAccents(cliente.nomeFantasia || '').toLowerCase()
+    const emailNormalizado = (cliente.email || '').toLowerCase()
+    const cpfDigitos = (cliente.cpf || '').replace(/\D/g, '')
+    const cnpjDigitos = (cliente.cnpj || '').replace(/\D/g, '')
+    const telefoneDigitos = (cliente.telefone || '').replace(/\D/g, '')
 
-    const correspondeTipo =
-      tipoFiltro.value === 'todos' ||
-      cliente.tipoPessoa === tipoFiltro.value
+    const correspondeDigitos = Boolean(
+      termoDigitos
+      && (cpfDigitos.includes(termoDigitos)
+        || cnpjDigitos.includes(termoDigitos)
+        || telefoneDigitos.includes(termoDigitos))
+    )
+
+    const correspondeBusca
+      = !termo
+        || nomeNormalizado.includes(termo)
+        || razaoNormalizada.includes(termo)
+        || fantasiaNormalizada.includes(termo)
+        || emailNormalizado.includes(termo)
+        || (cliente.cpf || '').toLowerCase().includes(termo)
+        || (cliente.cnpj || '').toLowerCase().includes(termo)
+        || (cliente.telefone || '').toLowerCase().includes(termo)
+        || String(cliente.id).includes(termo)
+        || correspondeDigitos
+
+    const correspondeTipo
+      = tipoFiltro.value === 'todos'
+        || cliente.tipoPessoa === tipoFiltro.value
 
     return correspondeBusca && correspondeTipo
   })
@@ -46,7 +75,7 @@ watch([busca, tipoFiltro], () => {
   pagination.value.pageIndex = 0
 })
 
-async function deletarCliente(cliente: Cliente) {
+async function deletarCliente(cliente: ClienteTabela) {
   const confirmado = window.confirm(
     `Deseja realmente excluir o cliente ${cliente.nome}?`
   )
@@ -65,16 +94,17 @@ async function deletarCliente(cliente: Cliente) {
       description: `${cliente.nome} foi excluído com sucesso.`,
       color: 'success'
     })
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const statusMessage = (err as { data?: { statusMessage?: string } })?.data?.statusMessage
     toast.add({
       title: 'Erro ao excluir',
-      description: error?.data?.statusMessage || 'Não foi possível excluir o cliente.',
+      description: statusMessage || 'Não foi possível excluir o cliente.',
       color: 'error'
     })
   }
 }
 
-function getRowItems(row: Row<Cliente>) {
+function getRowItems(row: Row<ClienteTabela>) {
   const cliente = row.original
 
   return [
@@ -87,6 +117,13 @@ function getRowItems(row: Row<Cliente>) {
       icon: 'i-lucide-eye',
       onSelect() {
         navigateTo(`/unidade/${unidadeId.value}/clientes/${cliente.id}`)
+      }
+    },
+    {
+      label: 'Editar',
+      icon: 'i-lucide-pencil',
+      onSelect() {
+        navigateTo(`/unidade/${unidadeId.value}/clientes/${cliente.id}/editar`)
       }
     },
     {
@@ -103,7 +140,7 @@ function getRowItems(row: Row<Cliente>) {
   ]
 }
 
-const columns: TableColumn<Cliente>[] = [
+const columns: TableColumn<ClienteTabela>[] = [
   {
     accessorKey: 'nome',
     header: 'Cliente',
@@ -115,15 +152,17 @@ const columns: TableColumn<Cliente>[] = [
   },
   {
     accessorKey: 'tipoPessoa',
-    header: 'Tipo',
-    cell: ({ row }) => {
-      const pessoaFisica = row.original.tipoPessoa === 'fisica'
-      return h(UBadge, {
-        label: pessoaFisica ? 'Pessoa Física' : 'Pessoa Jurídica',
-        color: pessoaFisica ? 'info' : 'success',
-        variant: 'subtle'
-      })
-    }
+    header: 'Tipo'
+  },
+  {
+    id: 'documento',
+    header: 'CPF / CNPJ',
+    cell: ({ row }) =>
+      h(
+        'span',
+        { class: 'tabular-nums text-default' },
+        (row.original.tipoPessoa === 'fisica' ? row.original.cpf : row.original.cnpj) || '—'
+      )
   },
   {
     id: 'contato',
@@ -139,21 +178,7 @@ const columns: TableColumn<Cliente>[] = [
     header: 'Veículos'
   },
   {
-    id: 'actions',
-    cell: ({ row }) =>
-      h('div', { class: 'text-right' },
-        h(UDropdownMenu, {
-          content: { align: 'end' },
-          items: getRowItems(row)
-        }, () =>
-          h(UButton, {
-            icon: 'i-lucide-ellipsis-vertical',
-            color: 'neutral',
-            variant: 'ghost',
-            class: 'ml-auto'
-          })
-        )
-      )
+    id: 'actions'
   }
 ]
 </script>
@@ -181,7 +206,7 @@ const columns: TableColumn<Cliente>[] = [
         <UInput
           v-model="busca"
           icon="i-lucide-search"
-          placeholder="Buscar clientes..."
+          placeholder="Buscar por nome, CPF, CNPJ ou telefone..."
           class="w-full sm:max-w-sm"
         />
         <USelect
@@ -195,10 +220,29 @@ const columns: TableColumn<Cliente>[] = [
         />
       </div>
 
+      <!-- Erro de fetch -->
+      <UAlert
+        v-if="error"
+        color="error"
+        variant="subtle"
+        title="Erro ao carregar clientes"
+        description="Não foi possível buscar os clientes cadastrados."
+        class="mb-4"
+      >
+        <template #actions>
+          <UButton
+            label="Tentar novamente"
+            color="error"
+            variant="soft"
+            @click="() => refresh()"
+          />
+        </template>
+      </UAlert>
+
       <!-- Tabela -->
       <UTable
         v-model:pagination="pagination"
-        :pagination-options="{ getPaginationRowModel: getPaginationRowModel(), pageSize: 10 }"
+        :pagination-options="{ getPaginationRowModel: getPaginationRowModel() }"
         :data="clientesFiltrados"
         :columns="columns"
         :loading="status === 'pending'"
@@ -211,6 +255,30 @@ const columns: TableColumn<Cliente>[] = [
           separator: 'h-0'
         }"
       >
+        <template #tipoPessoa-cell="{ row }">
+          <UBadge
+            :label="row.original.tipoPessoa === 'fisica' ? 'Pessoa Física' : 'Pessoa Jurídica'"
+            :color="row.original.tipoPessoa === 'fisica' ? 'info' : 'success'"
+            variant="subtle"
+          />
+        </template>
+
+        <template #actions-cell="{ row }">
+          <div class="text-right">
+            <UDropdownMenu
+              :content="{ align: 'end' }"
+              :items="getRowItems(row)"
+            >
+              <UButton
+                icon="i-lucide-ellipsis-vertical"
+                color="neutral"
+                variant="ghost"
+                class="ml-auto"
+              />
+            </UDropdownMenu>
+          </div>
+        </template>
+
         <template #empty>
           <UEmpty
             icon="i-lucide-users"

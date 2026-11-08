@@ -18,11 +18,11 @@ export default defineEventHandler(async (event) => {
 
   const cliente = await db.get<Cliente>(unidadeId, 'clientes', clienteId)
 
-  if (!cliente) {
+  if (!cliente || cliente.deletedAt) {
     throw createError({ statusCode: 404, statusMessage: 'Cliente não encontrado' })
   }
 
-  const veiculos = await db.list<VeiculoVinculo>(unidadeId, 'veiculos')
+  const veiculos = await db.list<VeiculoVinculo>(unidadeId, 'veiculos', veiculo => !veiculo.deletedAt)
   const possuiVeiculos = veiculos.some(veiculo => veiculo.clienteId === clienteId)
 
   if (possuiVeiculos) {
@@ -32,7 +32,11 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  await db.delete(unidadeId, 'clientes', clienteId)
+  const agora = new Date().toISOString()
+  await db.update<Cliente>(unidadeId, 'clientes', clienteId, {
+    deletedAt: agora,
+    dataAtualizacao: agora
+  })
 
   return { success: true }
 })

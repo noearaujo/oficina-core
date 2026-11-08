@@ -17,7 +17,9 @@ export interface Endereco {
 
 export interface Cliente {
   id: number
+  usuarioId: number
   nome: string
+  nomeBusca?: string
   tipoPessoa: 'fisica' | 'juridica'
   cpf?: string
   razaoSocial?: string
@@ -26,6 +28,9 @@ export interface Cliente {
   telefone?: string
   email?: string
   endereco?: Endereco
+  deletedAt?: string
+  dataCriacao: string
+  dataAtualizacao: string
 }
 
 // ═══ Veículo ═══
@@ -56,7 +61,7 @@ export interface ItemCatalogo {
   preco: number
   custo?: number
   unidade: string
-}   
+}
 
 // ═══ Outros ═══
 

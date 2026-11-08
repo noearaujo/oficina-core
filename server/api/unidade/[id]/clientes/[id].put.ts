@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
 
   const clienteExistente = await db.get<Cliente>(unidadeId, 'clientes', clienteId)
 
-  if (!clienteExistente) {
+  if (!clienteExistente || clienteExistente.deletedAt) {
     throw createError({ statusCode: 404, statusMessage: 'Cliente não encontrado' })
   }
 
@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
   const documento = novo.tipoPessoa === 'fisica' ? novo.cpf : novo.cnpj
   const documentoNormalizado = somenteNumeros(documento)
 
-  const clientes = await db.list<Cliente>(unidadeId, 'clientes')
+  const clientes = await db.list<Cliente>(unidadeId, 'clientes', cliente => !cliente.deletedAt)
   const duplicado = clientes.some((cliente) => {
     if (cliente.id === clienteId) return false
     const documentoExistente = cliente.tipoPessoa === 'fisica' ? cliente.cpf : cliente.cnpj
@@ -51,7 +51,13 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const clienteAtualizado = await db.update<Cliente>(unidadeId, 'clientes', clienteId, novo)
+  const agora = new Date().toISOString()
+  const clienteAtualizado = await db.update<Cliente>(unidadeId, 'clientes', clienteId, {
+    ...novo,
+    usuarioId: clienteExistente.usuarioId ?? novo.usuarioId ?? 1,
+    dataCriacao: clienteExistente.dataCriacao || agora,
+    dataAtualizacao: agora
+  })
 
   return clienteAtualizado
 })

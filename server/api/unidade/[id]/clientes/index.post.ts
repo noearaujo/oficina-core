@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
   const documento = novo.tipoPessoa === 'fisica' ? novo.cpf : novo.cnpj
   const documentoNormalizado = somenteNumeros(documento)
 
-  const clientes = await db.list<Cliente>(unidadeId, 'clientes')
+  const clientes = await db.list<Cliente>(unidadeId, 'clientes', cliente => !cliente.deletedAt)
   const duplicado = clientes.some((cliente) => {
     const documentoExistente = cliente.tipoPessoa === 'fisica' ? cliente.cpf : cliente.cnpj
     return somenteNumeros(documentoExistente ?? '') === documentoNormalizado
@@ -36,7 +36,13 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const cliente = await db.insert<Cliente>(unidadeId, 'clientes', novo)
+  const agora = new Date().toISOString()
+  const cliente = await db.insert<Cliente>(unidadeId, 'clientes', {
+    ...novo,
+    usuarioId: novo.usuarioId ?? 1,
+    dataCriacao: agora,
+    dataAtualizacao: agora
+  })
 
   return cliente
 })

@@ -16,7 +16,7 @@ const baseSchema = z.object({
   cnpj: z.string().optional(),
 
   telefone: z.string().trim().min(8, 'Informe um telefone válido'),
-  email: z.string().email('E-mail inválido').or(z.literal('')),
+  email: z.string().trim().email('E-mail inválido').or(z.literal('')),
 
   cep: z.string().optional(),
   logradouro: z.string().optional(),
@@ -132,10 +132,11 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
     const redirect = route.query.redirect as string | undefined
     await navigateTo(redirect || `/unidade/${unidadeId.value}/clientes/${novoCliente.id}`)
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const statusMessage = (error as { data?: { statusMessage?: string } })?.data?.statusMessage
     toast.add({
       title: 'Não foi possível cadastrar',
-      description: error?.data?.statusMessage || 'Verifique os dados e tente novamente.',
+      description: statusMessage || 'Verifique os dados e tente novamente.',
       color: 'error'
     })
   } finally {
@@ -156,7 +157,6 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
     <template #body>
       <div class="mx-auto w-full max-w-3xl">
-
         <UForm
           :schema="schema"
           :state="state"
@@ -164,7 +164,6 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           class="space-y-4 sm:space-y-6"
           @submit="onSubmit"
         >
-
           <!-- Identificação -->
           <UPageCard
             title="Identificação"
@@ -182,7 +181,12 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
               <!-- PF -->
               <div v-if="state.tipoPessoa === 'fisica'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <UFormField label="Nome completo" name="nome" required class="sm:col-span-2">
+                <UFormField
+                  label="Nome completo"
+                  name="nome"
+                  required
+                  class="sm:col-span-2"
+                >
                   <UInput v-model="state.nome" placeholder="Nome completo do cliente" />
                 </UFormField>
                 <UFormField label="CPF" name="cpf" required>
@@ -254,12 +258,20 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
           <!-- Ações -->
           <div class="flex justify-end gap-2">
-            <UButton :to="`/unidade/${unidadeId}/clientes`" color="neutral" variant="outline" label="Cancelar" />
-            <UButton type="submit" icon="i-lucide-check" label="Cadastrar cliente" :loading="enviando" />
+            <UButton
+              :to="`/unidade/${unidadeId}/clientes`"
+              color="neutral"
+              variant="outline"
+              label="Cancelar"
+            />
+            <UButton
+              type="submit"
+              icon="i-lucide-check"
+              label="Cadastrar cliente"
+              :loading="enviando"
+            />
           </div>
-
         </UForm>
-
       </div>
     </template>
   </UDashboardPanel>

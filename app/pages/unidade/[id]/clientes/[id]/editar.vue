@@ -21,7 +21,7 @@ const baseSchema = z.object({
   nomeFantasia: z.string().optional(),
   cnpj: z.string().optional(),
   telefone: z.string().trim().min(8, 'Informe um telefone válido'),
-  email: z.string().email('E-mail inválido').or(z.literal('')),
+  email: z.string().trim().email('E-mail inválido').or(z.literal('')),
   cep: z.string().optional(),
   logradouro: z.string().optional(),
   numero: z.string().optional(),
@@ -157,10 +157,11 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     })
 
     await navigateTo(`/unidade/${unidadeId.value}/clientes/${id.value}`)
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const statusMessage = (err as { data?: { statusMessage?: string } })?.data?.statusMessage
     toast.add({
       title: 'Não foi possível salvar',
-      description: err?.data?.statusMessage || 'Verifique os dados e tente novamente.',
+      description: statusMessage || 'Verifique os dados e tente novamente.',
       color: 'error'
     })
   } finally {
@@ -180,7 +181,6 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     </template>
 
     <template #body>
-
       <!-- Loading -->
       <div v-if="status === 'pending'" class="mx-auto w-full max-w-3xl space-y-4">
         <USkeleton class="h-64 w-full rounded-xl" />
@@ -195,13 +195,12 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         description="Não foi possível carregar os dados deste cliente."
         :actions="[
           { label: 'Voltar', icon: 'i-lucide-arrow-left', color: 'neutral', variant: 'outline', onClick: () => router.push(`/unidade/${unidadeId}/clientes/${id}`) },
-          { label: 'Tentar novamente', icon: 'i-lucide-refresh-cw', onClick: refresh }
+          { label: 'Tentar novamente', icon: 'i-lucide-refresh-cw', onClick: () => refresh() }
         ]"
       />
 
       <!-- Form -->
       <div v-else class="mx-auto w-full max-w-3xl">
-
         <UForm
           :schema="schema"
           :state="state"
@@ -209,7 +208,6 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           class="space-y-4 sm:space-y-6"
           @submit="onSubmit"
         >
-
           <!-- Identificação -->
           <UPageCard
             title="Identificação"
@@ -226,7 +224,12 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
               </UFormField>
 
               <div v-if="state.tipoPessoa === 'fisica'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <UFormField label="Nome completo" name="nome" required class="sm:col-span-2">
+                <UFormField
+                  label="Nome completo"
+                  name="nome"
+                  required
+                  class="sm:col-span-2"
+                >
                   <UInput v-model="state.nome" placeholder="Nome completo do cliente" />
                 </UFormField>
                 <UFormField label="CPF" name="cpf" required>
@@ -297,12 +300,20 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
           <!-- Ações -->
           <div class="flex justify-end gap-2">
-            <UButton :to="`/unidade/${unidadeId}/clientes/${id}`" color="neutral" variant="outline" label="Cancelar" />
-            <UButton type="submit" icon="i-lucide-check" label="Salvar alterações" :loading="enviando" />
+            <UButton
+              :to="`/unidade/${unidadeId}/clientes/${id}`"
+              color="neutral"
+              variant="outline"
+              label="Cancelar"
+            />
+            <UButton
+              type="submit"
+              icon="i-lucide-check"
+              label="Salvar alterações"
+              :loading="enviando"
+            />
           </div>
-
         </UForm>
-
       </div>
     </template>
   </UDashboardPanel>

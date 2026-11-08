@@ -1,8 +1,6 @@
 <script setup lang="ts">
-
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
 const unidadeId = computed(() => route.path.match(/\/unidade\/([^/]+)/)?.[1] ?? String(route.params.id))
 const id = computed(() => String(route.params.id))
 
@@ -20,7 +18,7 @@ const veiculosDoCliente = computed(() =>
   (veiculos.value ?? []).filter(v => v.clienteId === cliente.value?.id)
 )
 
-const endereco = computed(() => cliente.value?.endereco ?? {})
+const endereco = computed<Endereco>(() => cliente.value?.endereco ?? {})
 const enderecoCompleto = computed(() => {
   const e = endereco.value
   return [
@@ -59,7 +57,6 @@ watch(id, async () => {
     </template>
 
     <template #body>
-
       <!-- Loading -->
       <div v-if="status === 'pending'" class="mx-auto w-full max-w-3xl space-y-4">
         <USkeleton class="h-64 w-full rounded-xl" />
@@ -74,13 +71,12 @@ watch(id, async () => {
         description="Não foi possível carregar os dados deste cliente."
         :actions="[
           { label: 'Voltar para clientes', icon: 'i-lucide-arrow-left', color: 'neutral', variant: 'outline', onClick: () => router.push(`/unidade/${unidadeId}/clientes`) },
-          { label: 'Tentar novamente', icon: 'i-lucide-refresh-cw', onClick: refresh }
+          { label: 'Tentar novamente', icon: 'i-lucide-refresh-cw', onClick: () => refresh() }
         ]"
       />
 
       <!-- Conteúdo -->
       <div v-else class="mx-auto w-full max-w-3xl">
-
         <!-- ═══ Seção: Dados cadastrais ═══ -->
         <DashboardSectionHeader title="Dados cadastrais" description="Informações pessoais e de contato.">
           <UButton
@@ -98,7 +94,9 @@ watch(id, async () => {
             <div class="flex items-center gap-3">
               <UAvatar :alt="nomeExibicao" size="lg" />
               <div>
-                <h2 class="text-sm font-semibold text-highlighted">{{ nomeExibicao }}</h2>
+                <h2 class="text-sm font-semibold text-highlighted">
+                  {{ nomeExibicao }}
+                </h2>
                 <UBadge
                   :color="cliente.tipoPessoa === 'fisica' ? 'info' : 'success'"
                   variant="subtle"
@@ -112,13 +110,13 @@ watch(id, async () => {
 
           <template #body>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
-
               <!-- PF -->
               <DashboardDataField v-if="cliente.tipoPessoa === 'fisica'" label="CPF" :value="cliente.cpf" />
 
               <!-- PJ -->
               <template v-else>
-                <DashboardDataField label="Razão social" :value="cliente.razaoSocial" fallback="—" />
+                <DashboardDataField label="Razão social" :value="cliente.razaoSocial" />
+                <DashboardDataField label="Nome fantasia" :value="cliente.nomeFantasia" />
                 <DashboardDataField label="CNPJ" :value="cliente.cnpj" />
               </template>
 
@@ -130,7 +128,6 @@ watch(id, async () => {
               <div class="sm:col-span-2">
                 <DashboardDataField label="Endereço" :value="possuiEndereco ? enderecoCompleto.join(' · ') : ''" />
               </div>
-
             </div>
           </template>
         </UPageCard>
@@ -193,7 +190,6 @@ watch(id, async () => {
             class="py-8"
           />
         </UPageCard>
-
       </div>
     </template>
   </UDashboardPanel>
