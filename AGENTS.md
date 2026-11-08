@@ -1,3 +1,4 @@
+- Não mexer em app/components/UserMenu, TeamsMenu, NotificationsSlideover, settings/, index.vue (dashboard) — são do template e serão adaptados na Fase 2   
 # AGENTS.md — Oficina Core
 
 > **Versão:** 1.10.2 · 07/11/2026
