@@ -13,7 +13,9 @@ const emit = defineEmits<{
   deleted: []
 }>()
 
+const route = useRoute()
 const toast = useToast()
+const unidadeId = computed(() => route.path.match(/\/unidade\/([^/]+)/)?.[1] ?? String(route.params.id))
 const enviando = ref(false)
 
 const unidades = [
@@ -78,10 +80,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
   try {
     if (props.item) {
-      await $fetch(`/api/catalogo/${props.item.id}`, { method: 'PUT', body: d })
+      await $fetch(`/api/unidade/${unidadeId.value}/catalogo/${props.item.id}`, { method: 'PUT', body: d })
       toast.add({ title: 'Item atualizado', description: 'Os dados foram salvos com sucesso.', color: 'success' })
     } else {
-      await $fetch('/api/catalogo', { method: 'POST', body: d })
+      await $fetch(`/api/unidade/${unidadeId.value}/catalogo`, { method: 'POST', body: d })
       toast.add({ title: 'Item cadastrado', description: 'O item foi adicionado ao catálogo.', color: 'success' })
     }
 
@@ -104,7 +106,7 @@ async function excluir() {
   if (!confirmado) return
 
   try {
-    await $fetch(`/api/catalogo/${props.item.id}`, { method: 'DELETE' })
+    await $fetch(`/api/unidade/${unidadeId.value}/catalogo/${props.item.id}`, { method: 'DELETE' })
     toast.add({ title: 'Item excluído', description: `"${props.item.nome}" foi removido do catálogo.`, color: 'success' })
     emit('deleted')
     emit('update:open', false)

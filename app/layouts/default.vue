@@ -5,25 +5,34 @@ const route = useRoute()
 const toast = useToast()
 
 const open = ref(false)
+const unidadeId = computed(() => route.path.match(/\/unidade\/([^/]+)/)?.[1] ?? (route.params.id ? String(route.params.id) : '1'))
 
-const links = [[{
+const links = computed<NavigationMenuItem[][]>(() => [[{
+  label: 'Dashboard',
+  icon: 'i-lucide-house',
+  to: `/unidade/${unidadeId.value}`,
+  exact: true,
+  onSelect: () => {
+    open.value = false
+  }
+}, {
   label: 'Clientes',
   icon: 'i-lucide-users',
-  to: '/clientes',
+  to: `/unidade/${unidadeId.value}/clientes`,
   onSelect: () => {
     open.value = false
   }
 }, {
   label: 'Veículos',
   icon: 'i-lucide-car',
-  to: '/veiculos',
+  to: `/unidade/${unidadeId.value}/veiculos`,
   onSelect: () => {
     open.value = false
   }
 }, {
   label: 'Catálogo',
   icon: 'i-lucide-book-open',
-  to: '/catalogo',
+  to: `/unidade/${unidadeId.value}/catalogo`,
   onSelect: () => {
     open.value = false
   }
@@ -69,12 +78,12 @@ const links = [[{
   icon: 'i-lucide-info',
   to: 'https://github.com/nuxt-ui-templates/dashboard',
   target: '_blank'
-}]] satisfies NavigationMenuItem[][]
+}]])
 
 const groups = computed(() => [{
   id: 'links',
   label: 'Go to',
-  items: links.flat()
+  items: links.value.flat()
 }, {
   id: 'code',
   label: 'Code',
