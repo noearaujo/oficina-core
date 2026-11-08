@@ -37,6 +37,7 @@ export interface Cliente {
 
 export interface Veiculo {
   id: number
+  unidadeId: number
   clienteId: number
   tipo: string
   marca: string
@@ -47,8 +48,11 @@ export interface Veiculo {
   anoModelo: string | number
   cor?: string
   combustivel?: string
-  quilometragem?: string | number
+  quilometragem?: number
   chassi?: string
+  deletedAt?: string
+  dataCriacao: string
+  dataAtualizacao: string
 }
 
 // ═══ Catálogo ═══

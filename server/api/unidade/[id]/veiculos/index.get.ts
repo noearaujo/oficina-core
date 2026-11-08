@@ -1,5 +1,5 @@
 import { db } from '../../../../utils/storage'
-import type { Veiculo } from '../../../../utils/veiculos'
+import { normalizarPlaca, type Veiculo } from '../../../../utils/veiculos'
 
 export default defineEventHandler(async (event) => {
   const unidadeId = Number(getRouterParam(event, 'id'))
@@ -8,5 +8,13 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'ID de unidade inválido' })
   }
 
-  return await db.list<Veiculo>(unidadeId, 'veiculos')
+  const veiculos = await db.list<Veiculo>(unidadeId, 'veiculos', veiculo => !veiculo.deletedAt)
+
+  return veiculos.map(veiculo => ({
+    ...veiculo,
+    placa: normalizarPlaca(veiculo.placa),
+    quilometragem: veiculo.quilometragem !== undefined && veiculo.quilometragem !== null && String(veiculo.quilometragem) !== ''
+      ? Number(veiculo.quilometragem)
+      : undefined
+  }))
 })

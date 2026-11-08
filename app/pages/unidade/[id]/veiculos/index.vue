@@ -5,6 +5,8 @@ import { getPaginationRowModel } from '@tanstack/table-core'
 
 interface VeiculoTabela extends Veiculo {
   clienteNome: string
+  clienteNomeBusca: string
+  clienteCpf: string
 }
 
 const route = useRoute()
@@ -33,26 +35,50 @@ const { data: clientes } = await useFetch<Cliente[]>(() => `/api/unidade/${unida
   watch: [unidadeId]
 })
 
+function stripAccents(valor: string) {
+  return valor.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
+
 const veiculosTabela = computed<VeiculoTabela[]>(() => {
-  return veiculos.value.map((veiculo) => ({
-    ...veiculo,
-    clienteNome: clientes.value.find(
-      cliente => cliente.id === veiculo.clienteId
-    )?.nome ?? 'Cliente não encontrado'
-  }))
+  return veiculos.value.map((veiculo) => {
+    const cliente = clientes.value.find(c => c.id === veiculo.clienteId)
+    const clienteNome = cliente?.nome ?? 'Cliente não encontrado'
+
+    return {
+      ...veiculo,
+      clienteNome,
+      clienteNomeBusca: cliente?.nomeBusca || stripAccents(clienteNome).toLowerCase(),
+      clienteCpf: cliente?.cpf ?? ''
+    }
+  })
 })
 
 const veiculosFiltrados = computed(() => {
-  const termo = busca.value.trim().toLocaleLowerCase('pt-BR')
+  const termo = stripAccents(busca.value.trim()).toLowerCase()
+  const termoDigitos = termo.replace(/\D/g, '')
 
   return veiculosTabela.value.filter((veiculo) => {
+    if (!termo) return true
+
+    const placaNormalizada = veiculo.placa.toLowerCase()
+    const marcaNormalizada = stripAccents(veiculo.marca).toLowerCase()
+    const modeloNormalizado = stripAccents(veiculo.modelo).toLowerCase()
+    const versaoNormalizada = stripAccents(veiculo.versao || '').toLowerCase()
+    const cpfDigitos = veiculo.clienteCpf.replace(/\D/g, '')
+
+    const correspondeCpf = Boolean(
+      (termoDigitos && cpfDigitos.includes(termoDigitos))
+      || veiculo.clienteCpf.toLowerCase().includes(termo)
+    )
+
     return (
-      !termo ||
-      veiculo.placa.toLocaleLowerCase('pt-BR').includes(termo) ||
-      veiculo.marca.toLocaleLowerCase('pt-BR').includes(termo) ||
-      veiculo.modelo.toLocaleLowerCase('pt-BR').includes(termo) ||
-      veiculo.clienteNome.toLocaleLowerCase('pt-BR').includes(termo) ||
-      String(veiculo.id).includes(termo)
+      placaNormalizada.includes(termo)
+      || marcaNormalizada.includes(termo)
+      || modeloNormalizado.includes(termo)
+      || versaoNormalizada.includes(termo)
+      || veiculo.clienteNomeBusca.includes(termo)
+      || correspondeCpf
+      || String(veiculo.id).includes(termo)
     )
   })
 })
@@ -80,10 +106,11 @@ async function deletarVeiculo(veiculo: VeiculoTabela) {
       description: `${veiculo.placa} foi excluído com sucesso.`,
       color: 'success'
     })
-  } catch {
+  } catch (err: unknown) {
+    const statusMessage = (err as { data?: { statusMessage?: string } })?.data?.statusMessage
     toast.add({
       title: 'Erro ao excluir',
-      description: 'Não foi possível excluir o veículo.',
+      description: statusMessage || 'Não foi possível excluir o veículo.',
       color: 'error'
     })
   }
@@ -102,6 +129,13 @@ function getRowItems(row: Row<VeiculoTabela>) {
       icon: 'i-lucide-eye',
       onSelect() {
         navigateTo(`/unidade/${unidadeId.value}/veiculos/${veiculo.id}`)
+      }
+    },
+    {
+      label: 'Editar',
+      icon: 'i-lucide-pencil',
+      onSelect() {
+        navigateTo(`/unidade/${unidadeId.value}/veiculos/${veiculo.id}/editar`)
       }
     },
     {
@@ -165,21 +199,7 @@ const columns: TableColumn<VeiculoTabela>[] = [
       h('span', { class: 'text-default' }, row.original.clienteNome)
   },
   {
-    id: 'actions',
-    cell: ({ row }) =>
-      h('div', { class: 'text-right' },
-        h(UDropdownMenu, {
-          content: { align: 'end' },
-          items: getRowItems(row)
-        }, () =>
-          h(UButton, {
-            icon: 'i-lucide-ellipsis-vertical',
-            color: 'neutral',
-            variant: 'ghost',
-            class: 'ml-auto'
-          })
-        )
-      )
+    id: 'actions'
   }
 ]
 </script>
@@ -207,7 +227,7 @@ const columns: TableColumn<VeiculoTabela>[] = [
         <UInput
           v-model="busca"
           icon="i-lucide-search"
-          placeholder="Buscar por placa, veículo ou proprietário..."
+          placeholder="Buscar por placa, veículo, proprietário ou CPF..."
           class="w-full sm:max-w-sm"
         />
       </div>
@@ -226,7 +246,7 @@ const columns: TableColumn<VeiculoTabela>[] = [
             label="Tentar novamente"
             color="error"
             variant="soft"
-            @click="refresh"
+            @click="() => refresh()"
           />
         </template>
       </UAlert>
@@ -234,7 +254,7 @@ const columns: TableColumn<VeiculoTabela>[] = [
       <!-- Tabela -->
       <UTable
         v-model:pagination="pagination"
-        :pagination-options="{ getPaginationRowModel: getPaginationRowModel(), pageSize: 10 }"
+        :pagination-options="{ getPaginationRowModel: getPaginationRowModel() }"
         :data="veiculosFiltrados"
         :columns="columns"
         :loading="status === 'pending'"
@@ -247,6 +267,22 @@ const columns: TableColumn<VeiculoTabela>[] = [
           separator: 'h-0'
         }"
       >
+        <template #actions-cell="{ row }">
+          <div class="text-right">
+            <UDropdownMenu
+              :content="{ align: 'end' }"
+              :items="getRowItems(row)"
+            >
+              <UButton
+                icon="i-lucide-ellipsis-vertical"
+                color="neutral"
+                variant="ghost"
+                class="ml-auto"
+              />
+            </UDropdownMenu>
+          </div>
+        </template>
+
         <template #empty>
           <UEmpty
             icon="i-lucide-car"

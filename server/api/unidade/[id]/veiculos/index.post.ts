@@ -1,5 +1,5 @@
 import { db } from '../../../../utils/storage'
-import { veiculoSchema, type Veiculo } from '../../../../utils/veiculos'
+import { normalizarPlaca, veiculoSchema, type Veiculo } from '../../../../utils/veiculos'
 
 export default defineEventHandler(async (event) => {
   const unidadeId = Number(getRouterParam(event, 'id'))
@@ -19,10 +19,13 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const veiculos = await db.list<Veiculo>(unidadeId, 'veiculos')
+  const novo = resultado.data
+  const placaNormalizada = normalizarPlaca(novo.placa)
+
+  const veiculos = await db.list<Veiculo>(unidadeId, 'veiculos', veiculo => !veiculo.deletedAt)
 
   const placaExiste = veiculos.some(
-    veiculo => veiculo.placa === resultado.data.placa
+    veiculo => normalizarPlaca(veiculo.placa) === placaNormalizada
   )
 
   if (placaExiste) {
@@ -32,7 +35,13 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const novoVeiculo = await db.insert<Veiculo>(unidadeId, 'veiculos', resultado.data)
+  const agora = new Date().toISOString()
+  const novoVeiculo = await db.insert<Veiculo>(unidadeId, 'veiculos', {
+    ...novo,
+    placa: placaNormalizada,
+    dataCriacao: agora,
+    dataAtualizacao: agora
+  })
 
   return novoVeiculo
 })

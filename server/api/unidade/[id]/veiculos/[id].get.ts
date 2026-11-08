@@ -1,5 +1,5 @@
 import { db } from '../../../../utils/storage'
-import type { Veiculo } from '../../../../utils/veiculos'
+import { normalizarPlaca, type Veiculo } from '../../../../utils/veiculos'
 
 export default defineEventHandler(async (event) => {
   const pathname = getRequestURL(event).pathname
@@ -21,12 +21,18 @@ export default defineEventHandler(async (event) => {
 
   const veiculo = await db.get<Veiculo>(unidadeId, 'veiculos', veiculoId)
 
-  if (!veiculo) {
+  if (!veiculo || veiculo.deletedAt) {
     throw createError({
       statusCode: 404,
       statusMessage: 'Veículo não encontrado.'
     })
   }
 
-  return veiculo
+  return {
+    ...veiculo,
+    placa: normalizarPlaca(veiculo.placa),
+    quilometragem: veiculo.quilometragem !== undefined && veiculo.quilometragem !== null && String(veiculo.quilometragem) !== ''
+      ? Number(veiculo.quilometragem)
+      : undefined
+  }
 })

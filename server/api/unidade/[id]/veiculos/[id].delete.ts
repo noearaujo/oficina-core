@@ -21,14 +21,18 @@ export default defineEventHandler(async (event) => {
 
   const veiculo = await db.get<Veiculo>(unidadeId, 'veiculos', veiculoId)
 
-  if (!veiculo) {
+  if (!veiculo || veiculo.deletedAt) {
     throw createError({
       statusCode: 404,
       statusMessage: 'Veículo não encontrado.'
     })
   }
 
-  await db.delete(unidadeId, 'veiculos', veiculoId)
+  const agora = new Date().toISOString()
+  await db.update<Veiculo>(unidadeId, 'veiculos', veiculoId, {
+    deletedAt: agora,
+    dataAtualizacao: agora
+  })
 
-  return veiculo
+  return { success: true }
 })

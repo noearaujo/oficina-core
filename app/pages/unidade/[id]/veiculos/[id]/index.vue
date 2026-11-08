@@ -1,8 +1,6 @@
 <script setup lang="ts">
-
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
 const unidadeId = computed(() => route.path.match(/\/unidade\/([^/]+)/)?.[1] ?? String(route.params.id))
 const id = computed(() => String(route.params.id))
 
@@ -32,7 +30,7 @@ watch(() => veiculo.value?.clienteId, async (clienteId) => {
 
 const quilometragemFormatada = computed(() => {
   const valor = veiculo.value?.quilometragem
-  if (valor === undefined || valor === null || valor === '') return ''
+  if (valor === undefined || valor === null) return ''
   const numero = Number(valor)
   return Number.isFinite(numero) ? `${new Intl.NumberFormat('pt-BR').format(numero)} km` : `${valor} km`
 })
@@ -42,7 +40,7 @@ const nomeExibicao = computed(() => {
   return [veiculo.value.marca, veiculo.value.modelo, veiculo.value.versao].filter(Boolean).join(' ')
 })
 
-watch(id, refresh)
+watch(id, () => refresh())
 </script>
 
 <template>
@@ -56,7 +54,6 @@ watch(id, refresh)
     </template>
 
     <template #body>
-
       <!-- Loading -->
       <div v-if="status === 'pending'" class="mx-auto w-full max-w-3xl space-y-4">
         <USkeleton class="h-64 w-full rounded-xl" />
@@ -71,13 +68,12 @@ watch(id, refresh)
         description="Não foi possível carregar os dados deste veículo."
         :actions="[
           { label: 'Voltar para veículos', icon: 'i-lucide-arrow-left', color: 'neutral', variant: 'outline', onClick: () => router.push(`/unidade/${unidadeId}/veiculos`) },
-          { label: 'Tentar novamente', icon: 'i-lucide-refresh-cw', onClick: refresh }
+          { label: 'Tentar novamente', icon: 'i-lucide-refresh-cw', onClick: () => refresh() }
         ]"
       />
 
       <!-- Conteúdo -->
       <div v-else class="mx-auto w-full max-w-3xl">
-
         <!-- ═══ Seção: Dados do veículo ═══ -->
         <DashboardSectionHeader title="Dados do veículo" description="Informações de identificação e características.">
           <UButton
@@ -95,7 +91,9 @@ watch(id, refresh)
             <div class="flex items-center gap-3">
               <UAvatar :alt="veiculo.placa" icon="i-lucide-car" size="lg" />
               <div>
-                <h2 class="text-sm font-semibold text-highlighted">{{ nomeExibicao }}</h2>
+                <h2 class="text-sm font-semibold text-highlighted">
+                  {{ nomeExibicao }}
+                </h2>
               </div>
             </div>
           </template>
@@ -142,30 +140,10 @@ watch(id, refresh)
           />
 
           <!-- Erro -->
-          <p v-else class="p-4 text-sm text-muted">Não foi possível localizar o proprietário vinculado.</p>
+          <p v-else class="p-4 text-sm text-muted">
+            Não foi possível localizar o proprietário vinculado.
+          </p>
         </UPageCard>
-
-        <!--
-          ═══ Seção: Ordens de Serviço (FUTURA) ═══
-
-          Segue o MESMO padrão das seções acima:
-
-          1. UPageCard variant="naked" orientation="horizontal" class="mb-4 sm:mb-6"
-             - title="Ordens de serviço"
-             - description="X ordem(ns) de serviço para este veículo."
-             - Slot: UButton "Nova OS" (color="neutral", :to="/os/novo?veiculoId=X", class="w-fit lg:ms-auto")
-
-          2. UPageCard variant="subtle" :ui="{ container: 'p-0 sm:p-0 gap-y-0', wrapper: 'items-stretch' }"
-             - Lista com divide-y divide-default
-             - Cada item: NuxtLink para /os/[id]
-               - UAvatar icon="i-lucide-clipboard-list" class="size-10"
-               - flex-1 min-w-0:
-                 - p: identificador da OS (text-sm font-medium text-highlighted)
-                 - p: status + data (text-sm text-muted)
-               - UIcon chevron-right (group-hover:translate-x-0.5)
-             - UEmpty se não houver OS
-        -->
-
       </div>
     </template>
   </UDashboardPanel>

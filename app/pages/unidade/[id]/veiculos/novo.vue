@@ -39,14 +39,14 @@ const schema = z.object({
   versao: z.string().optional(),
   placa: z.string()
     .trim()
-    .regex(/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/, 'Informe uma placa válida')
-    .transform((value) => value.toUpperCase().replace(/[^A-Z0-9]/g, '')),
+    .transform(value => value.toUpperCase().replace(/[^A-Z0-9]/g, ''))
+    .refine(value => /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(value), 'Informe uma placa válida'),
   anoFabricacao: z.string().min(1, 'Informe o ano de fabricação'),
   anoModelo: z.string().min(1, 'Informe o ano do modelo'),
   cor: z.string().optional(),
   combustivel: z.string().optional(),
   quilometragem: z.string()
-    .refine((value) => !value || /^\d+$/.test(value), 'Informe uma quilometragem válida'),
+    .refine(value => !value || /^\d+$/.test(value), 'Informe uma quilometragem válida'),
   chassi: z.string().optional()
 }).superRefine((data, ctx) => {
   if (data.anoFabricacao && data.anoModelo && Number(data.anoModelo) < Number(data.anoFabricacao)) {
@@ -81,14 +81,16 @@ const { data: clientes, status: statusClientes } = await useFetch<Cliente[]>(
 )
 
 // Pré-seleciona cliente vindo da query (?clienteId=X)
-
-onMounted(() => {
-  const clienteId = route.query.clienteId
-  if (clienteId && clientes.value?.length) {
-    const encontrado = clientes.value.find(c => c.id === Number(clienteId))
-    if (encontrado) clienteSelecionado.value = encontrado
-  }
-})
+watch(
+  [() => route.query.clienteId, clientes],
+  ([clienteId, listaClientes]) => {
+    if (clienteId && listaClientes?.length && !clienteSelecionado.value) {
+      const encontrado = listaClientes.find(c => c.id === Number(clienteId))
+      if (encontrado) clienteSelecionado.value = encontrado
+    }
+  },
+  { immediate: true }
+)
 
 function trocarCliente() {
   clienteSelecionado.value = undefined
@@ -107,7 +109,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       method: 'POST',
       body: {
         clienteId: clienteSelecionado.value.id,
-        ...event.data
+        ...event.data,
+        quilometragem: event.data.quilometragem ? Number(event.data.quilometragem) : undefined
       }
     })
 
@@ -119,10 +122,11 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
     const redirect = route.query.redirect as string | undefined
     await navigateTo(redirect || `/unidade/${unidadeId.value}/veiculos/${novoVeiculo.id}`)
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const statusMessage = (error as { data?: { statusMessage?: string } })?.data?.statusMessage
     toast.add({
       title: 'Não foi possível cadastrar',
-      description: error?.data?.statusMessage || 'Verifique os dados e tente novamente.',
+      description: statusMessage || 'Verifique os dados e tente novamente.',
       color: 'error'
     })
   } finally {
@@ -143,7 +147,6 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
     <template #body>
       <div class="mx-auto w-full max-w-3xl">
-
         <UForm
           :schema="schema"
           :state="state"
@@ -151,7 +154,6 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           class="space-y-4 sm:space-y-6"
           @submit="onSubmit"
         >
-
           <!-- Cliente -->
           <UPageCard
             title="Cliente"
@@ -180,8 +182,12 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
                     <UIcon name="i-lucide-user-round" class="size-5 text-primary" />
                   </div>
                   <div class="min-w-0">
-                    <p class="text-sm font-medium truncate">{{ clienteSelecionado.nome }}</p>
-                    <p class="text-xs text-muted">Cliente selecionado</p>
+                    <p class="text-sm font-medium truncate">
+                      {{ clienteSelecionado.nome }}
+                    </p>
+                    <p class="text-xs text-muted">
+                      Cliente selecionado
+                    </p>
                   </div>
                 </div>
                 <UButton
@@ -195,7 +201,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
               <!-- CTA: cadastrar novo cliente -->
               <div v-else class="flex flex-wrap items-center justify-between gap-3">
-                <p class="text-sm text-muted">Não encontrou o cliente?</p>
+                <p class="text-sm text-muted">
+                  Não encontrou o cliente?
+                </p>
                 <UButton
                   :to="`/unidade/${unidadeId}/clientes/novo?redirect=/unidade/${unidadeId}/veiculos/novo`"
                   label="Cadastrar novo cliente"
@@ -261,12 +269,21 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
           <!-- Ações -->
           <div class="flex justify-end gap-2">
-            <UButton :to="`/unidade/${unidadeId}/veiculos`" color="neutral" variant="outline" label="Cancelar" />
-            <UButton type="submit" icon="i-lucide-check" label="Cadastrar veículo" :loading="enviando" :disabled="!clienteSelecionado" />
+            <UButton
+              :to="`/unidade/${unidadeId}/veiculos`"
+              color="neutral"
+              variant="outline"
+              label="Cancelar"
+            />
+            <UButton
+              type="submit"
+              icon="i-lucide-check"
+              label="Cadastrar veículo"
+              :loading="enviando"
+              :disabled="!clienteSelecionado"
+            />
           </div>
-
         </UForm>
-
       </div>
     </template>
   </UDashboardPanel>

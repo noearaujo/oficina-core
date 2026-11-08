@@ -55,13 +55,13 @@ const schema = z.object({
   versao: z.string().optional(),
   placa: z.string()
     .trim()
-    .regex(/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/, 'Informe uma placa válida')
-    .transform((value) => value.toUpperCase().replace(/[^A-Z0-9]/g, '')),
+    .transform(value => value.toUpperCase().replace(/[^A-Z0-9]/g, ''))
+    .refine(value => /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(value), 'Informe uma placa válida'),
   anoFabricacao: z.string().min(1, 'Informe o ano de fabricação'),
   anoModelo: z.string().min(1, 'Informe o ano do modelo'),
   cor: z.string().optional(),
   combustivel: z.string().optional(),
-  quilometragem: z.string().refine((value) => !value || /^\d+$/.test(value), 'Informe uma quilometragem válida'),
+  quilometragem: z.string().refine(value => !value || /^\d+$/.test(value), 'Informe uma quilometragem válida'),
   chassi: z.string().optional()
 }).superRefine((data, ctx) => {
   if (data.anoFabricacao && data.anoModelo && Number(data.anoModelo) < Number(data.anoFabricacao)) {
@@ -90,7 +90,7 @@ const tipoOriginal = ref('')
 const clienteAtualId = ref(0)
 
 // Pré-preenche quando os dados chegam
-watch(veiculo, (v) => {
+watch([veiculo, clientes], ([v, listaClientes]) => {
   if (!v) return
   state.tipo = v.tipo
   state.marca = v.marca
@@ -101,13 +101,13 @@ watch(veiculo, (v) => {
   state.anoModelo = String(v.anoModelo)
   state.cor = v.cor || ''
   state.combustivel = v.combustivel || ''
-  state.quilometragem = v.quilometragem ? String(v.quilometragem) : ''
+  state.quilometragem = v.quilometragem !== undefined && v.quilometragem !== null ? String(v.quilometragem) : ''
   state.chassi = v.chassi || ''
   tipoOriginal.value = v.tipo
 
-  const cliente = clientes.value?.find(c => c.id === v.clienteId)
+  clienteAtualId.value = v.clienteId
+  const cliente = listaClientes?.find(c => c.id === v.clienteId)
   if (cliente) clienteSelecionado.value = cliente
-  clienteAtualId.value = v.clienteId  // ← inicializa com o original
 }, { immediate: true })
 
 // Confirm ao trocar tipo
@@ -133,7 +133,7 @@ watch(clienteSelecionado, (novoCliente) => {
   if (!confirmado) {
     clienteSelecionado.value = clienteAntigo
   } else {
-    clienteAtualId.value = novoCliente.id  // ← atualiza
+    clienteAtualId.value = novoCliente.id
   }
 })
 
@@ -148,7 +148,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       method: 'PUT',
       body: {
         clienteId: clienteSelecionado.value.id,
-        ...event.data
+        ...event.data,
+        quilometragem: event.data.quilometragem ? Number(event.data.quilometragem) : undefined
       }
     })
 
@@ -159,10 +160,11 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     })
 
     await navigateTo(`/unidade/${unidadeId.value}/veiculos/${id.value}`)
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const statusMessage = (err as { data?: { statusMessage?: string } })?.data?.statusMessage
     toast.add({
       title: 'Não foi possível salvar',
-      description: err?.data?.statusMessage || 'Verifique os dados e tente novamente.',
+      description: statusMessage || 'Verifique os dados e tente novamente.',
       color: 'error'
     })
   } finally {
@@ -182,7 +184,6 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     </template>
 
     <template #body>
-
       <!-- Loading -->
       <div v-if="status === 'pending'" class="mx-auto w-full max-w-3xl space-y-4">
         <USkeleton class="h-40 w-full rounded-xl" />
@@ -197,13 +198,12 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         description="Não foi possível carregar os dados deste veículo."
         :actions="[
           { label: 'Voltar', icon: 'i-lucide-arrow-left', color: 'neutral', variant: 'outline', onClick: () => router.push(`/unidade/${unidadeId}/veiculos/${id}`) },
-          { label: 'Tentar novamente', icon: 'i-lucide-refresh-cw', onClick: refresh }
+          { label: 'Tentar novamente', icon: 'i-lucide-refresh-cw', onClick: () => refresh() }
         ]"
       />
 
       <!-- Form -->
       <div v-else class="mx-auto w-full max-w-3xl">
-
         <UForm
           :schema="schema"
           :state="state"
@@ -211,7 +211,6 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           class="space-y-4 sm:space-y-6"
           @submit="onSubmit"
         >
-
           <!-- Cliente -->
           <UPageCard
             title="Proprietário"
@@ -284,12 +283,21 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
           <!-- Ações -->
           <div class="flex justify-end gap-2">
-            <UButton :to="`/unidade/${unidadeId}/veiculos/${id}`" color="neutral" variant="outline" label="Cancelar" />
-            <UButton type="submit" icon="i-lucide-check" label="Salvar alterações" :loading="enviando" :disabled="!clienteSelecionado" />
+            <UButton
+              :to="`/unidade/${unidadeId}/veiculos/${id}`"
+              color="neutral"
+              variant="outline"
+              label="Cancelar"
+            />
+            <UButton
+              type="submit"
+              icon="i-lucide-check"
+              label="Salvar alterações"
+              :loading="enviando"
+              :disabled="!clienteSelecionado"
+            />
           </div>
-
         </UForm>
-
       </div>
     </template>
   </UDashboardPanel>
