@@ -3,11 +3,12 @@
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
+const unidadeId = computed(() => route.path.match(/\/unidade\/([^/]+)/)?.[1] ?? String(route.params.id))
 const id = computed(() => String(route.params.id))
 
 const { data: veiculo, status, error, refresh } = await useFetch<Veiculo>(
-  () => `/api/veiculos/${id.value}`,
-  { watch: [id] }
+  () => `/api/unidade/${unidadeId.value}/veiculos/${id.value}`,
+  { watch: [unidadeId, id] }
 )
 
 const cliente = ref<Cliente | null>(null)
@@ -21,7 +22,7 @@ watch(() => veiculo.value?.clienteId, async (clienteId) => {
   }
   statusCliente.value = 'pending'
   try {
-    cliente.value = await $fetch<Cliente>(`/api/clientes/${clienteId}`)
+    cliente.value = await $fetch<Cliente>(`/api/unidade/${unidadeId.value}/clientes/${clienteId}`)
     statusCliente.value = 'success'
   } catch {
     cliente.value = null
@@ -69,7 +70,7 @@ watch(id, refresh)
         title="Veículo não encontrado"
         description="Não foi possível carregar os dados deste veículo."
         :actions="[
-          { label: 'Voltar para veículos', icon: 'i-lucide-arrow-left', color: 'neutral', variant: 'outline', onClick: () => router.push('/veiculos') },
+          { label: 'Voltar para veículos', icon: 'i-lucide-arrow-left', color: 'neutral', variant: 'outline', onClick: () => router.push(`/unidade/${unidadeId}/veiculos`) },
           { label: 'Tentar novamente', icon: 'i-lucide-refresh-cw', onClick: refresh }
         ]"
       />
@@ -85,7 +86,7 @@ watch(id, refresh)
             color="neutral"
             variant="outline"
             class="w-fit lg:ms-auto"
-            :to="`/veiculos/${veiculo.id}/editar`"
+            :to="`/unidade/${unidadeId}/veiculos/${veiculo.id}/editar`"
           />
         </DashboardSectionHeader>
 
@@ -134,7 +135,7 @@ watch(id, refresh)
           <!-- Conteúdo -->
           <DashboardListItem
             v-else-if="cliente"
-            :to="`/clientes/${cliente.id}`"
+            :to="`/unidade/${unidadeId}/clientes/${cliente.id}`"
             :avatar="cliente.nome"
             :title="cliente.nome"
             :subtitle="`${cliente.tipoPessoa === 'fisica' ? 'Pessoa Física' : 'Pessoa Jurídica'}${cliente.telefone ? ' · ' + cliente.telefone : ''}`"

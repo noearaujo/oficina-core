@@ -3,7 +3,9 @@ import type { TableColumn } from '@nuxt/ui'
 import type { Row } from '@tanstack/table-core'
 import { getPaginationRowModel } from '@tanstack/table-core'
 
+const route = useRoute()
 const toast = useToast()
+const unidadeId = computed(() => route.path.match(/\/unidade\/([^/]+)/)?.[1] ?? String(route.params.id))
 
 const busca = ref('')
 const tipoFiltro = ref('todos')
@@ -13,9 +15,13 @@ const pagination = ref({
   pageSize: 10
 })
 
-const { data, status, refresh } = await useFetch<Cliente[]>('/api/clientes', {
-  default: () => []
-})
+const { data, status, refresh } = await useFetch<Cliente[]>(
+  () => `/api/unidade/${unidadeId.value}/clientes`,
+  {
+    default: () => [],
+    watch: [unidadeId]
+  }
+)
 
 const clientesFiltrados = computed(() => {
   const termo = busca.value.trim().toLocaleLowerCase('pt-BR')
@@ -48,7 +54,7 @@ async function deletarCliente(cliente: Cliente) {
   if (!confirmado) return
 
   try {
-    await $fetch(`/api/clientes/${cliente.id}`, {
+    await $fetch(`/api/unidade/${unidadeId.value}/clientes/${cliente.id}`, {
       method: 'DELETE'
     })
 
@@ -80,7 +86,7 @@ function getRowItems(row: Row<Cliente>) {
       label: 'Visualizar',
       icon: 'i-lucide-eye',
       onSelect() {
-        navigateTo(`/clientes/${cliente.id}`)
+        navigateTo(`/unidade/${unidadeId.value}/clientes/${cliente.id}`)
       }
     },
     {
@@ -163,7 +169,7 @@ const columns: TableColumn<Cliente>[] = [
           <UButton
             label="Novo cliente"
             icon="i-lucide-plus"
-            to="/clientes/novo"
+            :to="`/unidade/${unidadeId}/clientes/novo`"
           />
         </template>
       </UDashboardNavbar>
@@ -215,4 +221,4 @@ const columns: TableColumn<Cliente>[] = [
       </UTable>
     </template>
   </UDashboardPanel>
-</template>   
+</template>

@@ -3,16 +3,17 @@
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
+const unidadeId = computed(() => route.path.match(/\/unidade\/([^/]+)/)?.[1] ?? String(route.params.id))
 const id = computed(() => String(route.params.id))
 
 const { data: cliente, status, error, refresh } = await useFetch<Cliente>(
-  () => `/api/clientes/${id.value}`,
-  { watch: [id] }
+  () => `/api/unidade/${unidadeId.value}/clientes/${id.value}`,
+  { watch: [unidadeId, id] }
 )
 
 const { data: veiculos, status: statusVeiculos, refresh: refreshVeiculos } = await useFetch<Veiculo[]>(
-  '/api/veiculos',
-  { default: () => [] }
+  () => `/api/unidade/${unidadeId.value}/veiculos`,
+  { default: () => [], watch: [unidadeId] }
 )
 
 const veiculosDoCliente = computed(() =>
@@ -72,7 +73,7 @@ watch(id, async () => {
         title="Cliente não encontrado"
         description="Não foi possível carregar os dados deste cliente."
         :actions="[
-          { label: 'Voltar para clientes', icon: 'i-lucide-arrow-left', color: 'neutral', variant: 'outline', onClick: () => router.push('/clientes') },
+          { label: 'Voltar para clientes', icon: 'i-lucide-arrow-left', color: 'neutral', variant: 'outline', onClick: () => router.push(`/unidade/${unidadeId}/clientes`) },
           { label: 'Tentar novamente', icon: 'i-lucide-refresh-cw', onClick: refresh }
         ]"
       />
@@ -88,7 +89,7 @@ watch(id, async () => {
             color="neutral"
             variant="outline"
             class="w-fit lg:ms-auto"
-            :to="`/clientes/${cliente.id}/editar`"
+            :to="`/unidade/${unidadeId}/clientes/${cliente.id}/editar`"
           />
         </DashboardSectionHeader>
 
@@ -143,7 +144,7 @@ watch(id, async () => {
             label="Cadastrar veículo"
             icon="i-lucide-plus"
             color="neutral"
-            :to="cliente ? `/veiculos/novo?clienteId=${cliente.id}` : undefined"
+            :to="cliente ? `/unidade/${unidadeId}/veiculos/novo?clienteId=${cliente.id}` : undefined"
             :disabled="!cliente"
             class="w-fit lg:ms-auto"
           />
@@ -176,7 +177,7 @@ watch(id, async () => {
             <DashboardListItem
               v-for="veiculo in veiculosDoCliente"
               :key="veiculo.id"
-              :to="`/veiculos/${veiculo.id}`"
+              :to="`/unidade/${unidadeId}/veiculos/${veiculo.id}`"
               icon="i-lucide-car"
               :title="`${veiculo.marca} ${veiculo.modelo}${veiculo.versao ? ' ' + veiculo.versao : ''}`"
               :subtitle="`${veiculo.placa} · ${formatarAno(veiculo)}`"
@@ -196,4 +197,4 @@ watch(id, async () => {
       </div>
     </template>
   </UDashboardPanel>
-</template>   
+</template>

@@ -3,6 +3,7 @@ import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
 const route = useRoute()
+const unidadeId = computed(() => route.path.match(/\/unidade\/([^/]+)/)?.[1] ?? String(route.params.id))
 
 const baseSchema = z.object({
   tipoPessoa: z.enum(['fisica', 'juridica']),
@@ -98,7 +99,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   enviando.value = true
 
   try {
-    const novoCliente = await $fetch<{ id: number }>('/api/clientes', {
+    const novoCliente = await $fetch<{ id: number }>(`/api/unidade/${unidadeId.value}/clientes`, {
       method: 'POST',
       body: {
         tipoPessoa: d.tipoPessoa,
@@ -130,7 +131,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     })
 
     const redirect = route.query.redirect as string | undefined
-    await navigateTo(redirect || `/clientes/${novoCliente.id}`)
+    await navigateTo(redirect || `/unidade/${unidadeId.value}/clientes/${novoCliente.id}`)
   } catch (error: any) {
     toast.add({
       title: 'Não foi possível cadastrar',
@@ -253,7 +254,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
           <!-- Ações -->
           <div class="flex justify-end gap-2">
-            <UButton to="/clientes" color="neutral" variant="outline" label="Cancelar" />
+            <UButton :to="`/unidade/${unidadeId}/clientes`" color="neutral" variant="outline" label="Cancelar" />
             <UButton type="submit" icon="i-lucide-check" label="Cadastrar cliente" :loading="enviando" />
           </div>
 
@@ -262,4 +263,4 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       </div>
     </template>
   </UDashboardPanel>
-</template>   
+</template>
