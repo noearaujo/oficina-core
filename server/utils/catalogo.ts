@@ -1,4 +1,5 @@
 import * as z from 'zod'
+import { stripAccents } from './clientes'
 
 export const unidades = [
   { label: 'Unidade', value: 'un' },
@@ -8,20 +9,35 @@ export const unidades = [
   { label: 'Litro', value: 'litro' },
   { label: 'Metro', value: 'm' },
   { label: 'Quilo', value: 'kg' },
-  { label: 'Peça', value: 'pca' },
+  { label: 'Peça', value: 'pca' }
 ]
 
 export const catalogoSchema = z.object({
   nome: z.string().trim().min(1, 'Informe o nome do item'),
+  nomeBusca: z.string().trim().optional(),
   tipo: z.enum(['servico', 'produto']),
-  descricao: z.string().optional().default(''),
-  preco: z.coerce.number().min(0, 'Preço inválido'),
-  custo: z.coerce.number().min(0).optional(),
-  unidade: z.string().min(1, 'Selecione a unidade')
-})
+  sku: z.string().trim().optional().default(''),
+  descricao: z.string().trim().optional().default(''),
+  preco: z.coerce.number().int('Preço deve ser inteiro em centavos').min(0, 'Preço inválido'),
+  custo: z.preprocess(
+    value => (value === '' || value === null || value === undefined ? undefined : value),
+    z.coerce.number().int('Custo deve ser inteiro em centavos').min(0, 'Custo inválido').optional()
+  ),
+  unidade: z.string().trim().min(1, 'Selecione a unidade'),
+  dataCriacao: z.string().optional(),
+  dataAtualizacao: z.string().optional()
+}).transform(item => ({
+  ...item,
+  sku: item.tipo === 'produto' ? (item.sku || '') : '',
+  nomeBusca: stripAccents(item.nome).toLowerCase()
+}))
 
-export type ItemCatalogoCadastro = z.infer<typeof catalogoSchema>
+export type ItemCatalogoCadastro = z.output<typeof catalogoSchema>
 
-export interface ItemCatalogo extends ItemCatalogoCadastro {
+export type ItemCatalogo = Omit<ItemCatalogoCadastro, 'dataCriacao' | 'dataAtualizacao'> & {
   id: number
+  unidadeId: number
+  dataCriacao: string
+  dataAtualizacao: string
+  [key: string]: unknown
 }

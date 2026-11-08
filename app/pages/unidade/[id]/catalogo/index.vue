@@ -13,18 +13,27 @@ const { data, status, error, refresh } = await useFetch<ItemCatalogo[]>(
   }
 )
 
+function stripAccents(valor: string) {
+  return valor.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
+
 const itensFiltrados = computed(() => {
-  const termo = busca.value.trim().toLocaleLowerCase('pt-BR')
+  const termo = stripAccents(busca.value.trim()).toLowerCase()
 
   return data.value.filter((item) => {
-    const correspondeBusca =
-      !termo ||
-      item.nome.toLocaleLowerCase('pt-BR').includes(termo) ||
-      item.descricao?.toLocaleLowerCase('pt-BR').includes(termo)
+    const nomeNormalizado = item.nomeBusca || stripAccents(item.nome).toLowerCase()
+    const skuNormalizado = (item.sku || '').toLowerCase()
+    const descricaoNormalizada = stripAccents(item.descricao || '').toLowerCase()
 
-    const correspondeTipo =
-      tipoFiltro.value === 'todos' ||
-      item.tipo === tipoFiltro.value
+    const correspondeBusca
+      = !termo
+        || nomeNormalizado.includes(termo)
+        || skuNormalizado.includes(termo)
+        || descricaoNormalizada.includes(termo)
+
+    const correspondeTipo
+      = tipoFiltro.value === 'todos'
+        || item.tipo === tipoFiltro.value
 
     return correspondeBusca && correspondeTipo
   })
@@ -44,8 +53,8 @@ function abrirEdicao(item: ItemCatalogo) {
   modalOpen.value = true
 }
 
-function formatarPreco(valor: number) {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor)
+function formatarPreco(centavos: number) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(centavos / 100)
 }
 </script>
 
@@ -69,7 +78,7 @@ function formatarPreco(valor: number) {
           <UInput
             v-model="busca"
             icon="i-lucide-search"
-            placeholder="Buscar por nome ou descrição..."
+            placeholder="Buscar por nome ou SKU..."
             class="w-full sm:max-w-sm"
           />
           <USelect
@@ -92,7 +101,12 @@ function formatarPreco(valor: number) {
           description="Não foi possível buscar os itens."
         >
           <template #actions>
-            <UButton label="Tentar novamente" color="error" variant="soft" @click="refresh" />
+            <UButton
+              label="Tentar novamente"
+              color="error"
+              variant="soft"
+              @click="() => refresh()"
+            />
           </template>
         </UAlert>
 
@@ -116,7 +130,7 @@ function formatarPreco(valor: number) {
               @click="abrirEdicao(item)"
             >
               <!-- Ícone -->
-              <UAvatar
+              <UAvata
                 :alt="item.nome"
                 :icon="item.tipo === 'servico' ? 'i-lucide-wrench' : 'i-lucide-package'"
                 class="size-10"
@@ -124,9 +138,15 @@ function formatarPreco(valor: number) {
 
               <!-- Texto -->
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-highlighted truncate">{{ item.nome }}</p>
-                <p class="text-sm text-muted">
-                  {{ item.tipo === 'servico' ? 'Serviço' : 'Produto' }} · {{ item.unidade }}
+                <p class="text-sm font-medium text-highlighted truncate">
+                  {{ item.nome }}
+                </p>
+                <p class="text-sm text-muted truncate">
+                  {{ item.tipo === 'servico' ? 'Serviço' : 'Produto' }} · {{ item.unidade }}<template v-if="item.sku">
+                    · SKU: {{ item.sku }}
+                  </template><template v-if="item.custo !== undefined">
+                    · Custo: {{ formatarPreco(item.custo) }}
+                  </template>
                 </p>
               </div>
 
@@ -157,8 +177,8 @@ function formatarPreco(valor: number) {
         <CatalogoItemModal
           v-model:open="modalOpen"
           :item="itemEditando"
-          @saved="refresh"
-          @deleted="refresh"
+          @saved="() => refresh()"
+          @deleted="() => refresh()"
         />
       </div>
     </template>

@@ -19,7 +19,12 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const novoItem = await db.insert<ItemCatalogo>(unidadeId, 'catalogo', resultado.data)
+  const agora = new Date().toISOString()
+  const novoItem = await db.insert<ItemCatalogo>(unidadeId, 'catalogo', {
+    ...resultado.data,
+    dataCriacao: agora,
+    dataAtualizacao: agora
+  })
 
   return novoItem
 })

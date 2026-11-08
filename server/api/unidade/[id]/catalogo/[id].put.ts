@@ -33,10 +33,15 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Item não encontrado' })
   }
 
+  const agora = new Date().toISOString()
+
   // Tipo é imutável — preserva o original
   const itemAtualizado = await db.update<ItemCatalogo>(unidadeId, 'catalogo', itemId, {
     ...resultado.data,
-    tipo: itemExistente.tipo
+    tipo: itemExistente.tipo,
+    sku: itemExistente.tipo === 'produto' ? (resultado.data.sku || '') : '',
+    dataCriacao: itemExistente.dataCriacao || agora,
+    dataAtualizacao: agora
   })
 
   return itemAtualizado

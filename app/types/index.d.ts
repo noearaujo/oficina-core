@@ -16,8 +16,8 @@ export interface Endereco {
 }
 
 export interface Cliente {
-  id: number
-  usuarioId: number
+  id: numbe
+  usuarioId: numbe
   nome: string
   nomeBusca?: string
   tipoPessoa: 'fisica' | 'juridica'
@@ -36,19 +36,19 @@ export interface Cliente {
 // ═══ Veículo ═══
 
 export interface Veiculo {
-  id: number
-  unidadeId: number
-  clienteId: number
+  id: numbe
+  unidadeId: numbe
+  clienteId: numbe
   tipo: string
   marca: string
   modelo: string
   versao?: string
   placa: string
-  anoFabricacao: string | number
-  anoModelo: string | number
+  anoFabricacao: string | numbe
+  anoModelo: string | numbe
   cor?: string
   combustivel?: string
-  quilometragem?: number
+  quilometragem?: numbe
   chassi?: string
   deletedAt?: string
   dataCriacao: string
@@ -58,19 +58,24 @@ export interface Veiculo {
 // ═══ Catálogo ═══
 
 export interface ItemCatalogo {
-  id: number
+  id: numbe
+  unidadeId: numbe
   nome: string
+  nomeBusca?: string
   tipo: 'servico' | 'produto'
+  sku?: string
   descricao?: string
-  preco: number
-  custo?: number
+  preco: numbe
+  custo?: numbe
   unidade: string
+  dataCriacao: string
+  dataAtualizacao: string
 }
 
 // ═══ Outros ═══
 
 export interface User {
-  id: number
+  id: numbe
   name: string
   email: string
   avatar?: AvatarProps
@@ -89,7 +94,7 @@ export interface Stat {
   title: string
   icon: string
   value: number | string
-  variation: number
+  variation: numbe
   formatter?: (value: number) => string
 }
 
@@ -98,13 +103,13 @@ export interface Sale {
   date: string
   status: SaleStatus
   email: string
-  amount: number
+  amount: numbe
 }
 
 export interface Notification {
-  id: number
+  id: numbe
   unread?: boolean
-  sender: User
+  sender: Use
   body: string
   date: string
 }
