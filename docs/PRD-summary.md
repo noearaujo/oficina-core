@@ -38,3 +38,58 @@ O tenant é o `Usuario` dono; unidades são filiais operacionais dentro do tenan
 - Estoque fiscal/avançado (entrada por XML, custo médio, múltiplos depósitos, reserva antes da aprovação).
 - Controle de recebíveis de cartão/boleto (prazos D+X, taxas automáticas de adquirente, conciliação bancária).
 - Aprovação online por link público (`/p/[token]`) e envio automático por e-mail, WhatsApp ou SMS.
+
+## Entidades, Schemas e Tipos Implementados (Código)
+
+### 1. Cliente (`app/types/index.d.ts` e `server/utils/clientes.ts`)
+- **Tipo e Campos:** `Cliente` (`id`, `usuarioId`, `nome`, `nomeBusca`, `tipoPessoa`, `cpf`, `razaoSocial`, `nomeFantasia`, `cnpj`, `telefone`, `email`, `endereco`, `deletedAt`, `dataCriacao`, `dataAtualizacao`).
+- **Endereço Estruturado (`Endereco` / `enderecoSchema`):** `cep`, `logradouro`, `numero`, `complemento`, `bairro`, `cidade`, `estado` (strings com trim e defaults vazios).
+- **Validações Zod (`clienteSchema`):**
+  - `usuarioId`: inteiro positivo (default 1), escopo tenant cross-unit.
+  - `tipoPessoa`: enum `fisica` ou `juridica`.
+  - Validação condicional: PF exige `cpf`; PJ exige `razaoSocial` e `cnpj`.
+  - `telefone`: obrigatório, mínimo de 8 caracteres.
+  - `email`: formato válido de e-mail ou string vazia.
+  - `nomeBusca`: gerado automaticamente via transform com `stripAccents(nome).toLowerCase()`.
+- **Helpers e Vínculos:**
+  - `stripAccents`: normalização NFD para busca sem diacríticos.
+  - `somenteNumeros`: extração de dígitos numéricos.
+  - `VeiculoVinculo`: interface de vínculo com `deletedAt` para integridade referencial.
+
+### 2. Veículo (`app/types/index.d.ts` e `server/utils/veiculos.ts`)
+- **Tipo e Campos:** `Veiculo` (`id`, `unidadeId`, `clienteId`, `tipo`, `marca`, `modelo`, `versao`, `placa`, `anoFabricacao`, `anoModelo`, `cor`, `combustivel`, `quilometragem`, `chassi`, `deletedAt`, `dataCriacao`, `dataAtualizacao`).
+- **Validações Zod (`veiculoSchema`):**
+  - `clienteId`: inteiro positivo obrigatório (vínculo com cliente).
+  - `placa`: normalizada via `normalizarPlaca` (maiúsculas e alfanumérico) e validada por regex (formato tradicional ou Mercosul: `^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$`).
+  - Validação cruzada: `anoModelo` não pode ser anterior a `anoFabricacao`.
+  - `quilometragem`: preprocessado para undefined se vazio/nulo; inteiro `>= 0`.
+  - `tipo`, `marca`, `modelo`: obrigatórios.
+  - `versao`, `cor`, `combustivel`, `chassi`: opcionais com default vazio.
+  - Soft delete via `deletedAt`.
+
+### 3. Catálogo (`app/types/index.d.ts` e `server/utils/catalogo.ts`)
+- **Tipo e Campos:** `ItemCatalogo` (`id`, `unidadeId`, `nome`, `nomeBusca`, `tipo`, `sku`, `descricao`, `preco`, `custo`, `unidade`, `dataCriacao`, `dataAtualizacao`).
+- **Validações Zod (`catalogoSchema`):**
+  - `tipo`: enum `servico` ou `produto` (imutável).
+  - `preco`: inteiro em centavos (`min(0)`).
+  - `custo`: opcional, preprocessado e validado como inteiro em centavos (`min(0)`).
+  - `sku`: obrigatório/opcional para produto e limpo automaticamente para string vazia quando `tipo === 'servico'`.
+  - `nomeBusca`: gerado automaticamente via `stripAccents(nome).toLowerCase()`.
+- **Unidades de Medida Padronizadas (`unidades`):**
+  - `un` (Unidade), `jogo` (Jogo), `par` (Par), `h` (Hora), `litro` (Litro), `m` (Metro), `kg` (Quilo), `pca` (Peça).
+
+### 4. Storage Adapter (`server/utils/storage.ts`)
+- **Persistência:** Arquivos JSON locais no diretório `.data/` (`.data/[collection].json`).
+- **Interface Base:** `StorageRecord` (`id: number`, `unidadeId: number`).
+- **Operações:** `list`, `get`, `insert`, `update`, `delete` / `remove` sob o objeto `db`.
+- **Isolamento Multi-tenant:** Filtro automático por `unidadeId` (registros com `unidadeId === undefined` ou correspondente à unidade).
+- **Auto-incremento:** IDs sequenciais baseados em `max(id) + 1`.
+- **Controle de Concorrência:** `transaction<T>` com serialização por lock em memória (`transactionLock`).
+
+### 5. Tipos de UI e Template (`app/types/index.d.ts`)
+- `User` (`id`, `name`, `email`, `avatar`, `status`, `location`) e `UserStatus` (`subscribed` | `unsubscribed` | `bounced`).
+- `Member` (`name`, `username`, `role: 'member' | 'owner'`, `avatar`).
+- `Stat` (`title`, `icon`, `value`, `variation`, `formatter`).
+- `Sale` (`id`, `date`, `status`, `email`, `amount`) e `SaleStatus` (`paid` | `failed` | `refunded`).
+- `Notification` (`id`, `unread`, `sender`, `body`, `date`).
+- `Period` (`daily` | `weekly` | `monthly`) e `Range` (`start: Date`, `end: Date`).
