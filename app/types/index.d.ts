@@ -123,6 +123,21 @@ export interface ItemEstoqueDetalhe extends ItemEstoqueListagem {
   movimentos: MovimentoEstoque[]
 }
 
+// ═══ Carteiras ═══
+
+export interface Carteira {
+  id: number
+  unidadeId: number
+  tipo: 'banco' | 'cofre'
+  nome: string
+  nomeBusca?: string
+  saldoInicial: number
+  saldo?: number
+  ativa: boolean
+  dataCriacao: string
+  dataAtualizacao?: string
+}
+
 // ═══ Outros ═══
 
 export interface User {
