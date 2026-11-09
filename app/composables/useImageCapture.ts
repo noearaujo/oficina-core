@@ -18,12 +18,11 @@ export function useImageCapture(target: Ref<HTMLElement | null>) {
     try {
       const blobPromise = domToBlob(el, { scale: 2, backgroundColor: '#fff' })
       // Promise direto no ClipboardItem preserva o gesto do usuário (Safari).
-      await navigator.clipboard.write([
-        new ClipboardItem({ 'image/png': blobPromise.then((b) => {
-          if (!b) throw new Error('Falha ao gerar imagem')
-          return b
-        }) })
-      ])
+      const png = blobPromise.then((b) => {
+        if (!b) throw new Error('Falha ao gerar imagem')
+        return b
+      })
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': png })])
       hasCopied.value = true
       toast.add({ title: 'Imagem copiada', color: 'success' })
       clearTimeout(timer)

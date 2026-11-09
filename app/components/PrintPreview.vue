@@ -40,13 +40,14 @@ onBeforeUnmount(() => {
   <Teleport to="body">
     <div
       v-if="isOpen"
-      class="print-overlay fixed inset-0 z-9999 flex flex-col bg-black/85 backdrop-blur-md"
+      data-print="overlay"
+      class="fixed inset-0 z-9999 flex flex-col bg-black/85 backdrop-blur-md"
       role="dialog"
       aria-modal="true"
       :aria-label="title"
     >
       <!-- Toolbar -->
-      <div class="print-toolbar flex shrink-0 items-center justify-between gap-2 border-b border-white/10 px-3 py-2 sm:px-4">
+      <div class="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 px-3 py-2 sm:px-4">
         <h2 class="min-w-0 truncate text-sm font-semibold text-white sm:text-base">
           {{ title }}
         </h2>
@@ -88,12 +89,14 @@ onBeforeUnmount(() => {
       <!-- Área de scroll -->
       <div
         ref="scrollerRef"
-        class="print-scroll min-h-0 flex-1 overflow-auto"
+        data-print="scroll"
+        class="min-h-0 flex-1 overflow-auto"
         style="touch-action: pan-x pan-y"
       >
         <div
           ref="wrapperRef"
-          class="print-wrapper relative mx-auto shrink-0"
+          data-print="wrapper"
+          class="relative mx-auto shrink-0"
           style="width: calc(210mm + 4rem); min-height: calc(297mm + 4rem)"
         >
           <div
@@ -107,7 +110,7 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- Barra de zoom -->
-      <div class="print-zoom pointer-events-none absolute inset-x-0 bottom-4 flex justify-center">
+      <div class="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center">
         <div class="pointer-events-auto flex items-center gap-1 rounded-full bg-neutral-900/90 px-2 py-1 text-white shadow-lg ring ring-white/10">
           <UButton
             icon="i-lucide-minus"
@@ -152,9 +155,9 @@ onBeforeUnmount(() => {
     visibility: hidden;
   }
 
-  .print-overlay,
-  .print-scroll,
-  .print-wrapper {
+  [data-print='overlay'],
+  [data-print='scroll'],
+  [data-print='wrapper'] {
     position: static !important;
     display: block !important;
     width: auto !important;
