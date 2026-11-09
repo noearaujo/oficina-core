@@ -26,7 +26,9 @@ export function useImageCapture(target: Ref<HTMLElement | null>) {
       hasCopied.value = true
       toast.add({ title: 'Imagem copiada', color: 'success' })
       clearTimeout(timer)
-      timer = setTimeout(() => { hasCopied.value = false }, 2000)
+      timer = setTimeout(() => {
+        hasCopied.value = false
+      }, 2000)
     } catch {
       toast.add({
         title: 'Não foi possível copiar a imagem',
