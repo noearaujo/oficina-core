@@ -708,3 +708,208 @@ export async function baixarEstoqueVenda(
 
   return movimentosCriados
 }
+
+export interface ResultadoEstoqueOS {
+  aplicado: boolean
+  movimento?: MovimentoEstoque
+  saldoApos?: number
+  estoqueNegativo?: boolean
+  fallbackNota?: string
+}
+
+export async function baixarEstoqueItemOS(
+  unidadeId: number,
+  params: {
+    osId: number
+    osNumero: string
+    itemOsId: number
+    catalogoId?: number
+    nome: string
+    tipo: 'servico' | 'produto'
+    quantidade: number
+    estoqueBaixado?: boolean
+    usuarioId: number
+    data: string
+  }
+): Promise<ResultadoEstoqueOS> {
+  if (params.estoqueBaixado) {
+    return { aplicado: false }
+  }
+
+  if (params.tipo !== 'produto') {
+    return { aplicado: false }
+  }
+
+  if (!params.catalogoId) {
+    return {
+      aplicado: false,
+      fallbackNota: `Estorno de estoque ignorado: ${params.nome} não existe mais no catálogo`
+    }
+  }
+
+  const produto = await db.get<ItemCatalogo>(unidadeId, 'catalogo', Number(params.catalogoId))
+  if (!produto || produto.tipo !== 'produto') {
+    return {
+      aplicado: false,
+      fallbackNota: `Estorno de estoque ignorado: ${params.nome} não existe mais no catálogo`
+    }
+  }
+
+  const existentes = await db.list<ItemEstoque>(
+    unidadeId,
+    'estoque',
+    est => Number(est.catalogoId) === produto.id
+  )
+
+  let estoque = existentes[0]
+
+  if (!estoque) {
+    estoque = await db.insert<ItemEstoque>(unidadeId, 'estoque', {
+      catalogoId: produto.id,
+      nome: produto.nome,
+      nomeBusca: produto.nomeBusca || stripAccents(produto.nome).toLowerCase(),
+      sku: produto.sku || '',
+      unidade: produto.unidade,
+      quantidadeAtual: 0,
+      dataCriacao: params.data,
+      dataAtualizacao: params.data
+    })
+  }
+
+  const quantidade = Number(params.quantidade)
+  const novoSaldo = Number((Number(estoque.quantidadeAtual || 0) - quantidade).toFixed(3))
+
+  await db.update<ItemEstoque>(unidadeId, 'estoque', estoque.id, {
+    quantidadeAtual: novoSaldo,
+    dataAtualizacao: params.data
+  })
+
+  const movimento = await db.insert<MovimentoEstoque>(unidadeId, 'movimentos', {
+    catalogoId: produto.id,
+    estoqueId: estoque.id,
+    nome: params.nome || produto.nome,
+    tipo: 'saida',
+    quantidade,
+    origem: 'os_baixa',
+    documentoId: params.osId,
+    documentoTipo: 'os',
+    itemOsId: params.itemOsId,
+    saldoApos: novoSaldo,
+    observacao: `OS #${params.osNumero}`,
+    usuarioId: params.usuarioId || 1,
+    data: params.data
+  })
+
+  return {
+    aplicado: true,
+    movimento,
+    saldoApos: novoSaldo,
+    estoqueNegativo: novoSaldo < 0
+  }
+}
+
+export async function estornarEstoqueItemOS(
+  unidadeId: number,
+  params: {
+    osId: number
+    osNumero: string
+    itemOsId: number
+    catalogoId?: number
+    nome: string
+    tipo: 'servico' | 'produto'
+    quantidade: number
+    estoqueBaixado?: boolean
+    usuarioId: number
+    data: string
+  }
+): Promise<ResultadoEstoqueOS> {
+  if (!params.estoqueBaixado) {
+    return { aplicado: false }
+  }
+
+  if (params.tipo !== 'produto') {
+    return { aplicado: false }
+  }
+
+  if (!params.catalogoId) {
+    return {
+      aplicado: false,
+      fallbackNota: `Estorno de estoque ignorado: ${params.nome} não existe mais no catálogo`
+    }
+  }
+
+  const produto = await db.get<ItemCatalogo>(unidadeId, 'catalogo', Number(params.catalogoId))
+  if (!produto || produto.tipo !== 'produto') {
+    return {
+      aplicado: false,
+      fallbackNota: `Estorno de estoque ignorado: ${params.nome} não existe mais no catálogo`
+    }
+  }
+
+  const existentes = await db.list<ItemEstoque>(
+    unidadeId,
+    'estoque',
+    est => Number(est.catalogoId) === produto.id
+  )
+
+  const estoque = existentes[0]
+  if (!estoque) {
+    return {
+      aplicado: false,
+      fallbackNota: `Estorno de estoque ignorado: ${params.nome} não existe mais no catálogo`
+    }
+  }
+
+  const quantidade = Number(params.quantidade)
+  const novoSaldo = Number((Number(estoque.quantidadeAtual || 0) + quantidade).toFixed(3))
+
+  await db.update<ItemEstoque>(unidadeId, 'estoque', estoque.id, {
+    quantidadeAtual: novoSaldo,
+    dataAtualizacao: params.data
+  })
+
+  const movimento = await db.insert<MovimentoEstoque>(unidadeId, 'movimentos', {
+    catalogoId: produto.id,
+    estoqueId: estoque.id,
+    nome: params.nome || produto.nome,
+    tipo: 'entrada',
+    quantidade,
+    origem: 'os_estorno',
+    documentoId: params.osId,
+    documentoTipo: 'os',
+    itemOsId: params.itemOsId,
+    saldoApos: novoSaldo,
+    observacao: `Estorno OS #${params.osNumero}`,
+    usuarioId: params.usuarioId || 1,
+    data: params.data
+  })
+
+  return {
+    aplicado: true,
+    movimento,
+    saldoApos: novoSaldo,
+    estoqueNegativo: novoSaldo < 0
+  }
+}
+
+export async function ajustarEstoqueItem(
+  unidadeId: number,
+  params: {
+    acao: 'baixa' | 'estorno'
+    osId: number
+    osNumero: string
+    itemOsId: number
+    catalogoId?: number
+    nome: string
+    tipo: 'servico' | 'produto'
+    quantidade: number
+    estoqueBaixado?: boolean
+    usuarioId: number
+    data: string
+  }
+): Promise<ResultadoEstoqueOS> {
+  if (params.acao === 'baixa') {
+    return await baixarEstoqueItemOS(unidadeId, params)
+  }
+  return await estornarEstoqueItemOS(unidadeId, params)
+}

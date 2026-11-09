@@ -257,6 +257,120 @@ export interface Venda {
   dataCriacao: string
 }
 
+// ═══ Ordem de Serviço (OS) ═══
+
+export type StatusOS
+  = | 'aberta'
+    | 'em_diagnostico'
+    | 'aguardando_aprovacao'
+    | 'aprovada'
+    | 'em_execucao'
+    | 'concluida'
+    | 'entregue'
+    | 'cancelada'
+
+export type StatusItemOS = 'pendente' | 'aprovado' | 'recusado'
+
+export type TipoNota
+  = | 'item_add'
+    | 'item_edit'
+    | 'item_remove'
+    | 'item_approve'
+    | 'item_reject'
+    | 'envio'
+    | 'ajuste'
+    | 'reversao'
+    | 'cancelar'
+    | 'pagamento'
+    | 'transicao'
+    | 'estoque'
+
+export type CanalEnvioOrcamento = 'impressao' | 'imagem' | 'email' | 'link'
+
+export type StatusEnvioOrcamento = 'pendente' | 'enviado' | 'gerado' | 'falhou'
+
+export interface ItemOS {
+  id: number
+  osId: number
+  catalogoId?: number
+  nome: string
+  tipo: 'servico' | 'produto'
+  unidade?: string
+  quantidade: number
+  precoUnitario: number
+  status: 'pendente' | 'aprovado' | 'recusado'
+  lote: number | null
+  enviado: boolean
+  dataAprovacao?: string
+  dataRecusa?: string
+  motivoRecusa?: string
+  estoqueBaixado?: boolean
+}
+
+export interface Nota {
+  id: number
+  osId: number
+  texto: string
+  tipo: 'item_add' | 'item_edit' | 'item_remove' | 'item_approve' | 'item_reject'
+    | 'envio' | 'ajuste' | 'reversao' | 'cancelar' | 'pagamento' | 'transicao' | 'estoque'
+  role: string
+  data: string
+}
+
+export interface EnvioOrcamento {
+  id: number
+  osId: number
+  unidadeId: number
+  canal: 'impressao' | 'imagem' | 'email' | 'link'
+  status: 'pendente' | 'enviado' | 'gerado' | 'falhou'
+  itensIds: number[]
+  solicitadoEm: string
+  concluidoEm?: string
+  referencia?: string
+  erro?: string
+  usuarioId: number
+}
+
+export interface FaturamentoOS {
+  subtotal: number
+  desconto: number
+  total: number
+  pago: number
+  saldo: number
+  badge: 'pago' | 'parcial' | 'pendente' | null
+}
+
+export interface OrdemServico {
+  id: number
+  unidadeId: number
+  numero: string
+  tipo: 'normal' | 'garantia'
+  osOriginalId?: number
+  veiculoId: number
+  clienteId: number
+  funcionarioId: number
+  status: 'aberta' | 'em_diagnostico' | 'aguardando_aprovacao' | 'aprovada' | 'em_execucao' | 'concluida' | 'entregue' | 'cancelada'
+  queixa: string
+  diagnostico?: string
+  avarias?: string
+  combustivel?: string
+  quilometragem?: number
+  dataEntrada: string
+  previsaoEntrega?: string
+  itens: ItemOS[]
+  desconto?: number
+  orcamentoEnviado: boolean
+  token: string
+  notas: Nota[]
+  deletedAt?: string
+  dataCriacao: string
+  dataAtualizacao: string
+  dataAprovacao?: string
+  dataConclusao?: string
+  dataEntrega?: string
+  motivoCancelamento?: string
+}
+
 // ═══ Outros ═══
 
 export interface User {
