@@ -463,3 +463,25 @@ export interface Range {
   start: Date
   end: Date
 }
+
+export type StatusAgendamento = 'agendado' | 'realizado' | 'cancelado'
+
+export interface Agendamento {
+  id: number
+  unidadeId: number
+  clienteId: number
+  veiculoId?: number
+  dataHora: string
+  servico: string
+  status: StatusAgendamento
+  osId?: number
+  observacao?: string
+  criadoPor: number
+  dataCriacao: string
+}
+
+export interface AgendamentoView extends Agendamento {
+  clienteNome?: string
+  veiculoPlaca?: string
+  veiculoDescricao?: string
+}
