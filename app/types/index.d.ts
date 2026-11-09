@@ -138,6 +138,82 @@ export interface Carteira {
   dataAtualizacao?: string
 }
 
+// ═══ Caixa ═══
+
+export interface Caixa {
+  id: number
+  unidadeId: number
+  nome: string
+  nomeBusca?: string
+  ativo: boolean
+  dataCriacao: string
+  dataAtualizacao?: string
+}
+
+export interface CaixaUsuario {
+  id: number
+  unidadeId: number
+  caixaId: number
+  usuarioUnidadeId: number
+  ativo: boolean
+}
+
+export interface SessaoCaixa {
+  id: number
+  unidadeId: number
+  caixaId: number
+  status: 'aberta' | 'fechada'
+  abertaEm: string
+  abertaPorUsuarioId: number
+  responsavelNome?: string
+  valorAbertura: number
+  carteiraOrigemId?: number
+  carteiraOrigemNome?: string
+  fechadaEm?: string
+  fechadaPorUsuarioId?: number
+  saldoEsperadoFechamento?: number
+  valorContado?: number
+  diferenca?: number
+  motivoFechamento?: string
+  carteiraDestinoId?: number
+  carteiraDestinoNome?: string
+  saldoEsperado?: number
+  lancamentos?: LancamentoCaixa[]
+}
+
+export interface LancamentoCaixa {
+  id: number
+  unidadeId: number
+  tipo: 'entrada' | 'saida'
+  carteiraId?: number
+  sessaoCaixaId?: number
+  valor: number
+  data: string
+  documentoId?: number
+  documentoTipo?: 'os' | 'venda'
+  modalidade: 'dinheiro' | 'pix' | 'credito' | 'debito' | 'boleto' | 'transferencia'
+  categoria: string
+  parId?: number
+  estornoDe?: number
+  observacao?: string
+  criadoPorUsuarioId: number
+  dataCriacao: string
+}
+
+export interface CaixaComEstado extends Caixa {
+  status: 'aberto' | 'fechado'
+  statusSessao: 'aberta' | 'fechada'
+  aberta: boolean
+  sessaoAberta: SessaoCaixa | null
+  sessaoCaixaId: number | null
+  responsavelId: number | null
+  responsavel: string | null
+  responsavelNome: string | null
+  saldoEsperado: number
+  valorAbertura: number
+  lancamentosSessao: LancamentoCaixa[]
+}
+
 // ═══ Outros ═══
 
 export interface User {
