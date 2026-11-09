@@ -15,7 +15,9 @@ export const COLLECTIONS = [
   'carteiras',
   'caixas',
   'caixaUsuarios',
-  'sessoesCaixa'
+  'sessoesCaixa',
+  'vendas',
+  'vendaItens'
 ] as const
 
 export type StorageCollection = (typeof COLLECTIONS)[number] | (string & {})

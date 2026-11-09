@@ -564,3 +564,74 @@ export async function atualizarItemEstoque(
     }
   })
 }
+
+export async function baixarEstoqueVenda(
+  unidadeId: number,
+  params: {
+    vendaId: number
+    vendaNumero: string
+    usuarioId: number
+    data: string
+    itens: Array<{
+      catalogoId?: number
+      nome: string
+      quantidade: number
+    }>
+  }
+): Promise<MovimentoEstoque[]> {
+  const movimentosCriados: MovimentoEstoque[] = []
+
+  for (const item of params.itens) {
+    if (!item.catalogoId) continue
+
+    const produto = await db.get<ItemCatalogo>(unidadeId, 'catalogo', Number(item.catalogoId))
+    if (!produto || produto.tipo !== 'produto') continue
+
+    const existentes = await db.list<ItemEstoque>(
+      unidadeId,
+      'estoque',
+      est => Number(est.catalogoId) === produto.id
+    )
+
+    let estoque = existentes[0]
+
+    if (!estoque) {
+      estoque = await db.insert<ItemEstoque>(unidadeId, 'estoque', {
+        catalogoId: produto.id,
+        nome: produto.nome,
+        nomeBusca: produto.nomeBusca || stripAccents(produto.nome).toLowerCase(),
+        sku: produto.sku || '',
+        unidade: produto.unidade,
+        quantidadeAtual: 0,
+        dataCriacao: params.data,
+        dataAtualizacao: params.data
+      })
+    }
+
+    const quantidade = Number(item.quantidade)
+    const novoSaldo = Number((Number(estoque.quantidadeAtual || 0) - quantidade).toFixed(3))
+
+    await db.update<ItemEstoque>(unidadeId, 'estoque', estoque.id, {
+      quantidadeAtual: novoSaldo,
+      dataAtualizacao: params.data
+    })
+
+    const movimento = await db.insert<MovimentoEstoque>(unidadeId, 'movimentos', {
+      catalogoId: produto.id,
+      nome: item.nome || produto.nome,
+      tipo: 'saida',
+      quantidade,
+      origem: 'venda_baixa',
+      documentoId: params.vendaId,
+      documentoTipo: 'venda',
+      saldoApos: novoSaldo,
+      observacao: `Venda ${params.vendaNumero}`,
+      usuarioId: params.usuarioId || 1,
+      data: params.data
+    })
+
+    movimentosCriados.push(movimento)
+  }
+
+  return movimentosCriados
+}

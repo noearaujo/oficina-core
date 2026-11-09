@@ -214,6 +214,40 @@ export interface CaixaComEstado extends Caixa {
   lancamentosSessao: LancamentoCaixa[]
 }
 
+// ═══ PDV (Venda) ═══
+
+export type FormaPagamentoPDV = 'dinheiro' | 'pix' | 'credito' | 'debito'
+
+export interface VendaItem {
+  id: number
+  vendaId: number
+  catalogoId?: number
+  nome: string
+  unidade?: string
+  quantidade: number
+  precoUnitario: number
+}
+
+export interface Venda {
+  id: number
+  unidadeId: number
+  numero: string
+  clienteId?: number
+  clienteNome?: string
+  funcionarioId: number
+  itens: VendaItem[]
+  formaPagamento: FormaPagamentoPDV | string
+  sessaoCaixaId?: number
+  caixaId?: number
+  caixaNome?: string
+  carteiraId?: number
+  carteiraNome?: string
+  lancamentoId?: number
+  total?: number
+  observacao?: string
+  dataCriacao: string
+}
+
 // ═══ Outros ═══
 
 export interface User {
