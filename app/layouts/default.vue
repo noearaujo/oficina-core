@@ -16,6 +16,13 @@ const links = computed<NavigationMenuItem[][]>(() => [[{
     open.value = false
   }
 }, {
+  label: 'Ordens de serviço',
+  icon: 'i-lucide-clipboard-list',
+  to: `/unidade/${unidadeId.value}/os`,
+  onSelect: () => {
+    open.value = false
+  }
+}, {
   label: 'Clientes',
   icon: 'i-lucide-users',
   to: `/unidade/${unidadeId.value}/clientes`,
