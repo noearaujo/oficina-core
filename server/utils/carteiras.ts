@@ -227,6 +227,23 @@ export async function atualizarCarteira(
       }
     }
 
+    if (dados.ativa === false && atual.ativa !== false) {
+      const saldoAtual = await calcularSaldoCarteira(unidadeId, atual)
+      if (saldoAtual !== 0) {
+        throw createError({
+          statusCode: 409,
+          statusMessage: 'A Carteira só pode ser desativada com saldo zero'
+        })
+      }
+
+      if (await possuiSessaoAberta(unidadeId, carteiraId)) {
+        throw createError({
+          statusCode: 409,
+          statusMessage: 'Feche a sessão antes de desativar a Carteira'
+        })
+      }
+    }
+
     const agora = new Date().toISOString()
 
     const atualizada = await db.update<Carteira>(unidadeId, 'carteiras', carteiraId, {
@@ -278,6 +295,24 @@ export async function verificarMovimentacoesVinculadas(
   return temSessao
 }
 
+async function possuiSessaoAberta(
+  unidadeId: number,
+  carteiraId: number
+): Promise<boolean> {
+  const sessoes = await db.list<SessaoCaixaVinculo>(
+    unidadeId,
+    'sessoesCaixa',
+    sessao => sessao.status === 'aberta'
+  )
+
+  return sessoes.some(
+    sessao =>
+      Number(sessao.carteiraOrigemId) === carteiraId
+      || Number(sessao.carteiraId) === carteiraId
+      || Number(sessao.carteiraCofreId) === carteiraId
+  )
+}
+
 export async function excluirCarteira(
   unidadeId: number,
   carteiraId: number
@@ -288,11 +323,23 @@ export async function excluirCarteira(
       throw createError({ statusCode: 404, statusMessage: 'Carteira não encontrada' })
     }
 
-    const possuiVinculos = await verificarMovimentacoesVinculadas(unidadeId, carteiraId)
-    if (possuiVinculos) {
+    if (await possuiSessaoAberta(unidadeId, carteiraId)) {
       throw createError({
         statusCode: 409,
-        statusMessage: 'Não é possível excluir uma carteira que possui movimentações vinculadas'
+        statusMessage: 'Feche a sessão antes de excluir'
+      })
+    }
+
+    // Lançamentos históricos perdem a referência (UI exibe "Carteira removida")
+    const lancamentos = await db.list<MovimentoFinanceiroVinculo>(
+      unidadeId,
+      'lancamentos',
+      lanc => Number(lanc.carteiraId) === carteiraId
+    )
+
+    for (const lanc of lancamentos) {
+      await db.update<MovimentoFinanceiroVinculo>(unidadeId, 'lancamentos', lanc.id, {
+        carteiraId: null
       })
     }
 

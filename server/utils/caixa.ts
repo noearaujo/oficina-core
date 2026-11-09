@@ -2,6 +2,7 @@ import * as z from 'zod'
 import { db } from './storage'
 import { stripAccents } from './clientes'
 import type { Carteira } from './carteiras'
+import { calcularSaldoCarteira } from './carteiras'
 
 export const caixaSchema = z.object({
   nome: z.string().trim().min(1, 'Informe o nome do caixa'),
@@ -33,7 +34,7 @@ export const caixaUsuarioSchema = z.object({
 })
 
 const modalidadeCaixaGuard = z.string().optional().refine(
-  val => !val || val === 'dinheiro' || val === 'transferencia',
+  val => !val || val === 'dinheiro',
   'O Caixa movimenta apenas dinheiro em espécie (não aceita Pix, crédito, débito ou boleto)'
 )
 
@@ -285,6 +286,15 @@ export interface SessaoCaixa {
   [key: string]: unknown
 }
 
+export type Modalidade = 'dinheiro' | 'pix' | 'credito' | 'debito' | 'boleto' | 'transferencia'
+
+export type CategoriaLancamento =
+  | 'pagamento' | 'devolucao'
+  | 'peca' | 'material' | 'alimento' | 'fixo' | 'folha' | 'imposto'
+  | 'taxa_adquirente' | 'retirada_rapida'
+  | 'aporte' | 'emprestimo_socio'
+  | 'transferencia' | 'sobra_caixa' | 'quebra_caixa' | 'outro'
+
 export interface LancamentoCaixa {
   id: number
   unidadeId: number
@@ -295,8 +305,8 @@ export interface LancamentoCaixa {
   data: string
   documentoId?: number
   documentoTipo?: 'os' | 'venda'
-  modalidade: 'dinheiro' | 'pix' | 'credito' | 'debito' | 'boleto' | 'transferencia'
-  categoria: string
+  modalidade: Modalidade
+  categoria: CategoriaLancamento
   parId?: number
   estornoDe?: number
   observacao?: string
@@ -381,6 +391,20 @@ async function criarTransferenciaPareada(
   })
 
   return { saida, entrada, parId }
+}
+
+async function validarSaldoCarteira(
+  unidadeId: number,
+  carteira: Carteira,
+  valor: number
+): Promise<void> {
+  const saldo = await calcularSaldoCarteira(unidadeId, carteira)
+  if (valor > saldo) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: `Saldo insuficiente na Carteira "${carteira.nome}" (a Carteira não pode ficar negativa)`
+    })
+  }
 }
 
 async function resolverCofreAtivo(
@@ -632,6 +656,10 @@ export async function abrirCaixa(
 
     const agora = new Date().toISOString()
 
+    if (valorAbertura > 0 && cofreOrigem) {
+      await validarSaldoCarteira(unidadeId, cofreOrigem, valorAbertura)
+    }
+
     const novaSessao = await db.insert<SessaoCaixa>(unidadeId, 'sessoesCaixa', {
       caixaId,
       status: 'aberta',
@@ -871,6 +899,8 @@ export async function registrarReforcoCaixa(
     const valor = Math.round(Number(dados.valor))
     const agora = new Date().toISOString()
     const observacao = dados.motivo || `Reforço de caixa - ${caixa.nome}`
+
+    await validarSaldoCarteira(unidadeId, cofreOrigem, valor)
 
     const { parId } = await criarTransferenciaPareada(unidadeId, {
       origem: { carteiraId: cofreOrigem.id },

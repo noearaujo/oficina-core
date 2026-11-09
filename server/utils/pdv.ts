@@ -207,7 +207,8 @@ async function gerarProximoNumeroVenda(
     return Number.isFinite(num) && num > max ? num : max
   }, 0)
 
-  const unidade = await db.get<UnidadeRecord>(unidadeId, 'unidades', unidadeId)
+  const unidades = await db.list<UnidadeRecord>(unidadeId, 'unidades')
+  const unidade = unidades.find(u => Number(u.id) === unidadeId) ?? unidades[0]
   const contadorUnidade = Number(unidade?.nextVendaNumber ?? 1)
   const proximo = Math.max(
     Number.isFinite(contadorUnidade) && contadorUnidade > 0 ? contadorUnidade : 1,

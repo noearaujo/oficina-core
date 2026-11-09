@@ -1,6 +1,6 @@
 import { db } from '../../../../utils/storage'
 import { catalogoSchema, type ItemCatalogo } from '../../../../utils/catalogo'
-import type { ItemEstoque, MovimentoEstoque } from '../../../../utils/estoque'
+import { criarEstoqueInicialProduto } from '../../../../utils/estoque'
 
 export default defineEventHandler(async (event) => {
   const unidadeId = Number(getRouterParam(event, 'id'))
@@ -38,34 +38,11 @@ export default defineEventHandler(async (event) => {
     })
 
     if (novoItem.tipo === 'produto') {
-      const qtdInicial = saldoInicial !== undefined ? saldoInicial : 0
-
-      const novoEstoque = await db.insert<ItemEstoque>(unidadeId, 'estoque', {
-        catalogoId: novoItem.id,
-        nome: novoItem.nome,
-        nomeBusca: novoItem.nomeBusca,
-        sku: novoItem.sku || '',
-        unidade: novoItem.unidade,
-        quantidadeAtual: qtdInicial,
-        ...(quantidadeMinima !== undefined ? { quantidadeMinima } : {}),
-        dataCriacao: agora,
-        dataAtualizacao: agora
+      await criarEstoqueInicialProduto(unidadeId, novoItem, {
+        saldoInicial,
+        quantidadeMinima,
+        data: agora
       })
-
-      if (saldoInicial !== undefined && saldoInicial > 0) {
-        await db.insert<MovimentoEstoque>(unidadeId, 'movimentos', {
-          catalogoId: novoItem.id,
-          estoqueId: novoEstoque.id,
-          nome: novoItem.nome,
-          tipo: 'entrada_inicial',
-          quantidade: saldoInicial,
-          origem: 'manual',
-          saldoApos: saldoInicial,
-          observacao: 'Saldo inicial',
-          usuarioId: 1,
-          data: agora
-        })
-      }
     }
 
     return novoItem

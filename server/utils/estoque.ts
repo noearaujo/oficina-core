@@ -136,7 +136,7 @@ export interface MovimentoEstoque {
   estoqueId?: number
   catalogoId?: number
   nome: string
-  tipo: 'entrada' | 'saida' | 'entrada_inicial'
+  tipo: 'entrada' | 'saida'
   quantidade: number
   origem: 'manual' | 'os_baixa' | 'os_estorno' | 'venda_baixa'
   documentoId?: number
@@ -438,6 +438,79 @@ export async function criarEstoqueProduto(
   })
 }
 
+/**
+ * Cria o ItemEstoque de um produto recém-cadastrado (com saldo inicial opcional,
+ * que gera MovimentoEstoque). Não abre transação: deve ser chamada dentro de uma
+ * `db.transaction` do chamador (ex.: POST do catálogo).
+ */
+export async function criarEstoqueInicialProduto(
+  unidadeId: number,
+  produto: ItemCatalogo,
+  params: { saldoInicial?: number, quantidadeMinima?: number, usuarioId?: number, data: string }
+): Promise<ItemEstoque> {
+  const saldo = Number(params.saldoInicial ?? 0)
+
+  const estoque = await db.insert<ItemEstoque>(unidadeId, 'estoque', {
+    catalogoId: produto.id,
+    nome: produto.nome,
+    nomeBusca: produto.nomeBusca || stripAccents(produto.nome).toLowerCase(),
+    sku: produto.sku || '',
+    unidade: produto.unidade,
+    quantidadeAtual: saldo,
+    ...(params.quantidadeMinima !== undefined ? { quantidadeMinima: params.quantidadeMinima } : {}),
+    dataCriacao: params.data,
+    dataAtualizacao: params.data
+  })
+
+  if (saldo > 0) {
+    await db.insert<MovimentoEstoque>(unidadeId, 'movimentos', {
+      catalogoId: produto.id,
+      estoqueId: estoque.id,
+      nome: produto.nome,
+      tipo: 'entrada',
+      quantidade: saldo,
+      origem: 'manual',
+      saldoApos: saldo,
+      observacao: 'Saldo inicial',
+      usuarioId: params.usuarioId || 1,
+      data: params.data
+    })
+  }
+
+  return estoque
+}
+
+/**
+ * Cascade do catálogo: remove o ItemEstoque do produto excluído e preserva o
+ * histórico (MovimentoEstoque é append-only), apenas desvinculando `catalogoId`.
+ * Deve ser chamada dentro de uma `db.transaction` do chamador.
+ */
+export async function removerEstoqueDoProduto(unidadeId: number, catalogoId: number): Promise<void> {
+  const estoques = await db.list<ItemEstoque>(
+    unidadeId,
+    'estoque',
+    est => Number(est.catalogoId) === catalogoId
+  )
+  const estoqueIds = new Set(estoques.map(est => est.id))
+
+  for (const est of estoques) {
+    await db.delete(unidadeId, 'estoque', est.id)
+  }
+
+  const movimentos = await db.list<MovimentoEstoque>(
+    unidadeId,
+    'movimentos',
+    mov =>
+      Number(mov.catalogoId) === catalogoId
+      || (mov.estoqueId !== undefined && estoqueIds.has(Number(mov.estoqueId)))
+  )
+
+  for (const mov of movimentos) {
+    // merge com `undefined`: o campo é omitido na serialização (catalogoId ausente)
+    await db.update<MovimentoEstoque>(unidadeId, 'movimentos', mov.id, { catalogoId: undefined })
+  }
+}
+
 export async function ajustarEstoqueManual(
   unidadeId: number,
   dados: AjusteEstoqueInput
@@ -547,7 +620,7 @@ export async function atualizarItemEstoque(
 
     const atualizado = (await db.update<ItemEstoque>(unidadeId, 'estoque', estoque.id, {
       quantidadeAtual: novoSaldo,
-      quantidadeMinima: dados.quantidadeMinima,
+      ...(dados.quantidadeMinima !== undefined ? { quantidadeMinima: dados.quantidadeMinima } : {}),
       dataAtualizacao: agora
     }))!
 

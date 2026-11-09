@@ -181,6 +181,15 @@ export interface SessaoCaixa {
   lancamentos?: LancamentoCaixa[]
 }
 
+export type ModalidadeLancamento = 'dinheiro' | 'pix' | 'credito' | 'debito' | 'boleto' | 'transferencia'
+
+export type CategoriaLancamento =
+  | 'pagamento' | 'devolucao'
+  | 'peca' | 'material' | 'alimento' | 'fixo' | 'folha' | 'imposto'
+  | 'taxa_adquirente' | 'retirada_rapida'
+  | 'aporte' | 'emprestimo_socio'
+  | 'transferencia' | 'sobra_caixa' | 'quebra_caixa' | 'outro'
+
 export interface LancamentoCaixa {
   id: number
   unidadeId: number
@@ -191,8 +200,8 @@ export interface LancamentoCaixa {
   data: string
   documentoId?: number
   documentoTipo?: 'os' | 'venda'
-  modalidade: 'dinheiro' | 'pix' | 'credito' | 'debito' | 'boleto' | 'transferencia'
-  categoria: string
+  modalidade: ModalidadeLancamento
+  categoria: CategoriaLancamento
   parId?: number
   estornoDe?: number
   observacao?: string
