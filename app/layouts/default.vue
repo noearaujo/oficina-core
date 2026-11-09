@@ -79,6 +79,24 @@ const links = computed<NavigationMenuItem[][]>(() => [[{
     open.value = false
   }
 }, {
+  label: 'Relatorios',
+  icon: 'i-lucide-chart-line',
+  to: `/unidade/${unidadeId.value}/relatorios`,
+  onSelect: () => {
+    open.value = false
+  }
+}, {
+  label: 'Configurações',
+  icon: 'i-lucide-settings',
+  to: `/unidade/${unidadeId.value}/configuracoes`,
+  onSelect: () => {
+    open.value = false
+  }
+}
+
+  // links Configuacoes padrão do Dashboard Template
+  /*
+{
   label: 'Settings',
   to: '/settings',
   icon: 'i-lucide-settings',
@@ -110,7 +128,10 @@ const links = computed<NavigationMenuItem[][]>(() => [[{
       open.value = false
     }
   }]
-}], [{
+}
+*/
+
+], [{
   label: 'Feedback',
   icon: 'i-lucide-message-circle',
   to: 'https://github.com/nuxt-ui-templates/dashboard',
