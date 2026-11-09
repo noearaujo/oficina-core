@@ -295,6 +295,15 @@ type SchemaVenda = z.output<typeof schemaVenda>
 
 const enviando = ref(false)
 
+const { config } = useConfig()
+const vendaRecibo = ref<Venda | null>(null)
+const reciboAberto = ref(false)
+
+async function fecharRecibo() {
+  reciboAberto.value = false
+  if (vendaRecibo.value) await navigateTo(`/unidade/${unidadeId.value}/pdv/${vendaRecibo.value.id}`)
+}
+
 async function recarregarDados() {
   await Promise.all([
     refreshCatalogo(),
@@ -358,7 +367,8 @@ async function onSubmit(event: FormSubmitEvent<SchemaVenda>) {
     })
 
     itensVenda.value = []
-    await navigateTo(`/unidade/${unidadeId.value}/pdv/${vendaCriada.id}`)
+    vendaRecibo.value = vendaCriada
+    reciboAberto.value = true
   } catch (err: unknown) {
     const statusMessage = (err as { data?: { statusMessage?: string } })?.data?.statusMessage
     toast.add({
@@ -728,5 +738,14 @@ async function onSubmit(event: FormSubmitEvent<SchemaVenda>) {
         </div>
       </div>
     </template>
+
+    <PrintPreview
+      v-if="vendaRecibo"
+      :title="`Recibo ${vendaRecibo.numero}`"
+      :is-open="reciboAberto"
+      @close="fecharRecibo"
+    >
+      <TemplatesReciboTemplate :venda="vendaRecibo" :config="config" />
+    </PrintPreview>
   </UDashboardPanel>
 </template>

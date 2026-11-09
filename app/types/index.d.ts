@@ -371,6 +371,50 @@ export interface OrdemServico {
   motivoCancelamento?: string
 }
 
+// ═══ Impressão / Documentos ═══
+
+export interface Config {
+  nome: string
+  endereco?: string
+  telefone?: string
+  cnpj?: string
+  validadeDias: number
+  textoObservacoes?: string
+  textoGarantia?: string
+}
+
+export interface DocumentoItem {
+  id?: number
+  nome: string
+  tipo?: 'servico' | 'produto'
+  unidade?: string
+  quantidade: number
+  precoUnitario: number
+  status?: 'pendente' | 'aprovado' | 'recusado'
+  lote?: number | null
+  motivoRecusa?: string
+  dataAprovacao?: string
+}
+
+/** Subconjunto de OrdemServico (e de OSView) usado pelos templates A4. */
+export interface OSDocumento {
+  numero: string
+  tipo: 'normal' | 'garantia'
+  osOriginalId?: number
+  status: string
+  dataEntrada: string
+  dataCriacao?: string
+  dataAprovacao?: string
+  dataEntrega?: string
+  desconto?: number
+  itens: DocumentoItem[]
+  clienteNome?: string
+  veiculoPlaca?: string
+  veiculoMarca?: string
+  veiculoModelo?: string
+  faturamento?: { lancamentos?: { tipo: string, modalidade: string }[] }
+}
+
 // ═══ Outros ═══
 
 export interface User {

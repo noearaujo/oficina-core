@@ -77,10 +77,40 @@ const transicao = computed(() => statusAtual.value ? TRANSICOES[statusAtual.valu
 const STATUS_COM_IMPRESSAO: StatusOS[] = [
   'aguardando_aprovacao', 'aprovada', 'em_execucao', 'concluida', 'entregue', 'cancelada'
 ]
-const podeImprimir = computed(() => Boolean(statusAtual.value && STATUS_COM_IMPRESSAO.includes(statusAtual.value)))
+
+// Impressão (PrintPreview é 100% front-end: dados vêm do estado reativo)
+const { config } = useConfig()
+const previewAberto = ref(false)
+const modalImprimir = ref(false)
+const documentoAtual = ref('principal')
+
+const documentos = computed(() => {
+  const status = statusAtual.value
+  if (!status || !STATUS_COM_IMPRESSAO.includes(status)) return []
+  const lista: { key: string, label: string, titulo: string }[] = []
+  if (itensPrincipal.value.length) {
+    lista.push({ key: 'principal', label: 'Orçamento Principal', titulo: 'Orçamento' })
+  }
+  for (const lote of lotes.value) {
+    lista.push({ key: `lote-${lote}`, label: `Complemento [lote ${lote}]`, titulo: `Complemento ${lote}` })
+  }
+  if (status === 'concluida' || status === 'entregue') {
+    lista.push({ key: 'nota', label: 'Nota de Serviço', titulo: 'Nota de Serviço' })
+  }
+  return lista
+})
+const podeImprimir = computed(() => documentos.value.length > 0)
+const documentoSelecionado = computed(() => documentos.value.find(d => d.key === documentoAtual.value))
+
+function abrirPreview(key: string) {
+  documentoAtual.value = key
+  modalImprimir.value = false
+  previewAberto.value = true
+}
 
 function imprimir() {
-  toast.add({ title: 'Impressão disponível em breve', color: 'neutral' })
+  if (documentos.value.length === 1) abrirPreview(documentos.value[0]!.key)
+  else modalImprimir.value = true
 }
 
 const STATUS_CANCELAVEIS: StatusOS[] = ['aberta', 'em_diagnostico', 'aguardando_aprovacao', 'aprovada', 'em_execucao']
@@ -188,8 +218,10 @@ async function enviarOrcamento(canal: 'impressao' | 'imagem') {
   if (enviandoComplementos.value) {
     body.itensIds = complementosPendentes.value.map(i => i.id)
   }
+  const loteEnviado = enviandoComplementos.value ? complementosPendentes.value[0]?.lote : undefined
   if (await executar(() => post('/enviar-orcamento', body), enviandoComplementos.value ? 'Complementos enviados' : 'Orçamento enviado')) {
     modalEnviar.value = false
+    abrirPreview(typeof loteEnviado === 'number' ? `lote-${loteEnviado}` : 'principal')
   }
 }
 
@@ -705,6 +737,42 @@ const TIPO_NOTA: Record<string, { label: string, dot: string }> = {
         :titulo="enviandoComplementos ? 'Enviar complementos' : 'Enviar orçamento'"
         @confirm="enviarOrcamento"
       />
+      <UModal
+        v-model:open="modalImprimir"
+        title="Imprimir"
+        description="Escolha o documento para visualizar."
+      >
+        <template #body>
+          <div class="flex flex-col gap-2">
+            <UButton
+              v-for="doc in documentos"
+              :key="doc.key"
+              :label="doc.label"
+              icon="i-lucide-file-text"
+              color="neutral"
+              variant="outline"
+              block
+              class="justify-start"
+              @click="abrirPreview(doc.key)"
+            />
+          </div>
+        </template>
+      </UModal>
+      <PrintPreview
+        v-if="os"
+        :title="documentoSelecionado?.titulo || 'Documento'"
+        :is-open="previewAberto"
+        @close="previewAberto = false"
+      >
+        <TemplatesNotaServicoTemplate v-if="documentoAtual === 'nota'" :os="os" :config="config" />
+        <TemplatesOrcamentoComplementarTemplate
+          v-else-if="documentoAtual.startsWith('lote-')"
+          :os="os"
+          :config="config"
+          :lote="Number(documentoAtual.slice(5))"
+        />
+        <TemplatesOrcamentoTemplate v-else :os="os" :config="config" />
+      </PrintPreview>
       <OsModalMotivo
         v-model:open="modalAjustar"
         title="Ajustar orçamento"
