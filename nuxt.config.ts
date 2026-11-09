@@ -16,6 +16,9 @@ export default defineNuxtConfig({
   routeRules: {
     '/api/**': {
       cors: true
+    },
+    '/unidade/**': {
+      appLayout: 'unidade'
     }
   },
 
