@@ -24,7 +24,8 @@ export const COLLECTIONS = [
   'itensOS',
   'notas',
   'enviosOrcamento',
-  'agendamentos'
+  'agendamentos',
+  'configs'
 ] as const
 
 export type StorageCollection = (typeof COLLECTIONS)[number] | (string & {})
@@ -175,6 +176,19 @@ export async function transaction<T>(fn: () => Promise<T>): Promise<T> {
   }
 }
 
+/** Substitui todos os registros da unidade em uma coleção (usado no import de backup). */
+export async function replaceAll<T extends StorageRecord = StorageRecord>(
+  unidadeId: number,
+  collection: StorageCollection,
+  items: T[]
+): Promise<number> {
+  const atuais = await readCollection<T>(collection)
+  const outros = atuais.filter(item => item.unidadeId !== undefined && item.unidadeId !== unidadeId)
+  const novos = items.map(item => ({ ...item, unidadeId }) as T)
+  await writeCollection(collection, [...outros, ...novos])
+  return novos.length
+}
+
 export { remove }
 
 export const db = {
@@ -185,5 +199,6 @@ export const db = {
   update,
   delete: remove,
   remove,
+  replaceAll,
   transaction
 }

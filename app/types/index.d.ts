@@ -378,9 +378,12 @@ export interface Config {
   endereco?: string
   telefone?: string
   cnpj?: string
+  email?: string
   validadeDias: number
+  fusoHorario?: string
   textoObservacoes?: string
   textoGarantia?: string
+  textoRodape?: string
 }
 
 export interface DocumentoItem {
