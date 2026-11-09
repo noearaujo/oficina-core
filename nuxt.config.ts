@@ -1,11 +1,11 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  ssr: false,
   modules: [
     '@nuxt/eslint',
     '@nuxt/ui',
     '@vueuse/nuxt'
   ],
+  ssr: false,
 
   devtools: {
     enabled: true
@@ -20,6 +20,14 @@ export default defineNuxtConfig({
   },
 
   compatibilityDate: '2026-06-30',
+
+  typescript: {
+    tsConfig: {
+      compilerOptions: {
+        types: ['node']
+      }
+    }
+  },
 
   eslint: {
     config: {

@@ -27,9 +27,9 @@ const { data: catalogo, status: statusCatalogo } = await useFetch<ItemCatalogo[]
 )
 
 const carregando = computed(() =>
-  statusClientes.value === 'pending' ||
-  statusVeiculos.value === 'pending' ||
-  statusCatalogo.value === 'pending'
+  statusClientes.value === 'pending'
+  || statusVeiculos.value === 'pending'
+  || statusCatalogo.value === 'pending'
 )
 
 const cards = computed(() => [

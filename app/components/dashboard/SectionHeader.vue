@@ -15,4 +15,4 @@ defineProps<{
   >
     <slot />
   </UPageCard>
-</template>   
+</template>

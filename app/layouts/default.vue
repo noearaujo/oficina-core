@@ -37,6 +37,34 @@ const links = computed<NavigationMenuItem[][]>(() => [[{
     open.value = false
   }
 }, {
+  label: 'Estoque',
+  icon: 'i-lucide-package',
+  to: `/unidade/${unidadeId.value}/estoque`,
+  onSelect: () => {
+    open.value = false
+  }
+}, {
+  label: 'Carteiras',
+  icon: 'i-lucide-wallet',
+  to: `/unidade/${unidadeId.value}/carteiras`,
+  onSelect: () => {
+    open.value = false
+  }
+}, {
+  label: 'Caixa',
+  icon: 'i-lucide-banknote',
+  to: `/unidade/${unidadeId.value}/caixa`,
+  onSelect: () => {
+    open.value = false
+  }
+}, {
+  label: 'PDV',
+  icon: 'i-lucide-credit-card-reader',
+  to: `/unidade/${unidadeId.value}/pdv`,
+  onSelect: () => {
+    open.value = false
+  }
+}, {
   label: 'Settings',
   to: '/settings',
   icon: 'i-lucide-settings',
@@ -161,7 +189,7 @@ onMounted(async () => {
       </template>
     </UDashboardSidebar>
 
-    <UDashboardSearch :groups="groups" />
+    <UDashboardSearch :groups="groups as any" />
 
     <slot />
 

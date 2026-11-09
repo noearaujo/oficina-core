@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { Endereco } from '~/types'
+
 const route = useRoute()
 const router = useRouter()
 const unidadeId = computed(() => route.path.match(/\/unidade\/([^/]+)/)?.[1] ?? String(route.params.id))

@@ -31,4 +31,4 @@ defineProps<{
     </div>
     <UIcon name="i-lucide-chevron-right" class="size-4 text-muted shrink-0 group-hover:translate-x-0.5 transition-transform" />
   </NuxtLink>
-</template>   
+</template>
