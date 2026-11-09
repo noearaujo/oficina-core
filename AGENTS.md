@@ -54,6 +54,7 @@ Todas as rotas operacionais são aninhadas sob o escopo de unidade (`/unidade/[i
 # Mapa
 - `app/types/index.d.ts` — Tipos globais compartilhados
 - `app/components/` — Componentes visuais e modais por domínio (`dashboard/`, `os/`, `caixa/`, `shared/`, etc.)
+- Impressão: PrintPreview.vue (shell) + app/components/templates/ (templates A4)
 - `app/composables/` — Estado e lógica reutilizável de UI (`useAuth`, `useUnidade`, `useConfig`, `useOS`, `useSearch`)
 - `app/middleware/` — Guards de navegação client-side (`auth.global`, `unidade`, `role`)
 - `app/pages/` — Rotas da aplicação (`login`, `onboarding`, `unidades/`, `usuarios/`, `unidade/[id]/...`)

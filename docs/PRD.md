@@ -1346,16 +1346,37 @@ Os passos 2 a 4 são atômicos: se qualquer um falhar, nada é gravado.
 
 ## 10. Impressão / Documentos
 
-### 10.1 Componente
+### 10.1 PrintPreview — Shell genérico de impressão
 
-`PrintPreview.vue` — **1 componente, 4 modos:**
+`PrintPreview.vue` é o shell reutilizável de visualização e impressão de documentos A4. Ele NÃO contém templates de documento — recebe o conteúdo via slot (default).
 
-| Modo | Quando | Título |
-|---|---|---|
-| ORÇAMENTO | `aguardando_aprovacao` (e reimpressão do orçamento principal em `aprovada`) | "ORÇAMENTO" |
-| ORÇAMENTO COMPLEMENTAR | `em_execucao` com lote (e reimpressão em `concluida` / `entregue`) | "ORÇAMENTO COMPLEMENTAR" |
-| NOTA DE SERVIÇO | `concluida` / `entregue` | "NOTA DE SERVIÇO" |
-| RECIBO | PDV (Venda) | "RECIBO" |
+**Funcionalidades do shell:**
+- Preview fullscreen (overlay, fundo escuro com blur)
+- Deep Zoom localizado (Ctrl+Scroll desktop / Pinch mobile) — ponto sob o cursor permanece estático
+- Zoom inicial reduzido em mobile (A4 cabe na tela)
+- Barra de zoom flutuante (botões +/-, indicador %)
+- Copiar imagem (PNG, scale 2x, via modern-screenshot → clipboard)
+- Imprimir (window.print() com @media print isolado)
+- Fechar (ESC ou botão X)
+- Responsivo: toolbar compacta em mobile
+
+**Uso (qualquer feature):**
+```vue
+<PrintPreview :title="'ORÇAMENTO'" :is-open="aberto" @close="aberto = false">
+  <OrcamentoTemplate :os="os" :config="config" />
+</PrintPreview>
+```
+
+**Templates A4 (componentes separados em `app/components/templates/`):**
+
+| Template | Props | Quando usa |
+|----------|-------|-----------|
+| `OrcamentoTemplate.vue` | os, config | OS em aguardando_aprovacao (orçamento principal) |
+| `OrcamentoComplementarTemplate.vue` | os, config, lote | OS em em_execucao (complemento) |
+| `NotaServicoTemplate.vue` | os, config | OS em concluida/entregue |
+| `ReciboTemplate.vue` | venda, config | PDV (venda finalizada) |
+
+Novos templates: criar arquivo em `app/components/templates/` + usar no PrintPreview. Não modificar o shell.
 
 ### 10.2 Layout A4
 
@@ -1408,16 +1429,29 @@ _________________ Assinatura
 - Se não há recusados → seção não aparece
 - **Zero fetch** — lê do estado reativo da OS + config (já em memória)
 - Botões (`.no-print`): [← Voltar] · [📷 Salvar imagem] · [🖨 Imprimir / PDF]
-- `html2canvas` pro PNG (WhatsApp)
+- `modern-screenshot` pro PNG (WhatsApp / clipboard)
 - `window.print()` pro PDF (papel)
+- PrintPreview é 100% front-end: zero fetch, zero persistência. Dados vêm do estado reativo (OS, Venda, Config já em memória).
+- O registro de envio (EnvioOrcamento) é feito pela API, não pelo PrintPreview.
+- Zoom: 30% a 300%, step 15%, Ctrl+Scroll / Pinch / botões.
+- Imagem: PNG, scale 2x (Retina), copia pra clipboard.
+- Mobile: zoom inicial 45%, toolbar compacta, botões com ícone.
+- @media print: esconde shell, mostra só o A4 (transform: none).
 
 ### 10.4 Como abre
 
-**Modal full-screen** (overlay que toma a tela toda) dentro da OS/PDV:
-- Não é rota separada
-- Não faz request
-- Abre → A4 já está renderizado
-- Fecha → volta pro contexto
+**Modal de seleção (quando há 2+ documentos disponíveis):**
+- Se a OS tem orçamento principal E complementos → modal com lista:
+  - "Orçamento Principal"
+  - "Complemento [lote 1]"
+  - "Complemento [lote 2]"
+  - (se concluida/entregue) "Nota de Serviço"
+- Usuário seleciona → abre PrintPreview com o template correspondente
+
+**Abre direto (quando há 1 documento):**
+- OS em aguardando_aprovacao (só principal) → abre direto
+- PDV finalizada → abre direto (recibo)
+- OS em concluida sem complementos → abre direto (nota de serviço)
 
 ### 10.5 Envio do orçamento
 
@@ -1428,7 +1462,7 @@ O modal pede o canal:
 | Canal | MVP | O que faz |
 |---|---|---|
 | Impressão / PDF | ✅ | Abre o `PrintPreview` para imprimir ou salvar PDF |
-| Imagem (PNG) | ✅ | Gera a imagem (`html2canvas`) para o operador mandar por WhatsApp |
+| Imagem (PNG) | ✅ | Gera a imagem (`modern-screenshot`) para o operador mandar por WhatsApp |
 | E-mail | ❌ Fase 2 | Aparece desabilitado ("Em breve") |
 | Link para o cliente | ❌ Fase 2 | Aparece desabilitado ("Em breve") |
 

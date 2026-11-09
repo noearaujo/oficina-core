@@ -159,3 +159,12 @@ Ao criar uma nova página, verificar:
 - [ ] Produto exibido em lista/modal → badges `Estoque Negativo` / `Repor` (sem bloquear nada)
 - [ ] Ação que recebe em dinheiro → "Dinheiro" desabilitado sem sessão de Caixa aberta (e API valida)
 - [ ] Carteira referenciada em modal (pagamento, abertura de caixa, transferência) → select com nome, não ID
+
+---
+
+## 7. Impressão / PrintPreview
+
+- Componentes de impressão: shell em `app/components/os/PrintPreview.vue`, templates em `app/components/templates/`
+- Novo template: criar em `templates/`, usar via slot no PrintPreview
+- Zero fetch no PrintPreview: dados vêm de props (estado reativo)
+- Dependência: `modern-screenshot` (captura PNG)

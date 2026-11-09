@@ -16,6 +16,7 @@ O tenant é o `Usuario` dono; unidades são filiais operacionais dentro do tenan
 | Ordem de Serviço (workflow 8 status, lotes/complementos, garantia, impressão/PNG) e PDV (venda rápida, só `tipo = 'produto'`) | MVP |
 | Financeiro (`Lancamento` único, Carteiras `cofre`/`banco`, múltiplos Caixas e sessões em espécie) | MVP |
 | Agenda (Dia/Semana/Mês, conversão em OS), Dashboard, Relatórios (CSV), Lixeira (soft delete) e Backup JSON/CSV | MVP |
+| PrintPreview: shell genérico de impressão (deep zoom, pinch, copy, print). Templates A4 separados. Qualquer feature pode imprimir. | MVP |
 | Auth real (argon2id/D1), Fornecedor, Recebíveis/Conciliação, Link público (`/p/[token]`), E-mail, Multi-unidade UI (schema já é multi-unidade; MVP opera com 1 unidade default), Audit log | Fase 2 |
 | Nota fiscal, Lembretes (WhatsApp/SMS), Capacidade produtiva, Recorrência (revisão), MFA/SSO | Fase 3 |
 
