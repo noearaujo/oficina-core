@@ -1,3 +1,13 @@
+import { formatarDinheiro as formatarMoeda } from '~/utils/dinheiro'
+import {
+  ITEM_META,
+  PAGAMENTO_META,
+  RESPONSAVEIS,
+  STATUS_LISTA,
+  STATUS_META,
+  TIPO_NOTA
+} from '~/utils/os-constants'
+
 export type StatusOS
   = | 'aberta'
     | 'em_diagnostico'
@@ -78,58 +88,13 @@ export interface OSView {
   veiculoModelo?: string
 }
 
-interface StatusMeta {
-  label: string
-  color: 'neutral' | 'info' | 'success' | 'error' | 'warning'
-  class?: string
-}
-
-const STATUS_META: Record<StatusOS, StatusMeta> = {
-  aberta: { label: 'Aberta', color: 'neutral' },
-  em_diagnostico: { label: 'Em diagnóstico', color: 'neutral', class: 'bg-violet-500/10 text-violet-600 ring ring-inset ring-violet-500/25 dark:text-violet-400' },
-  aguardando_aprovacao: { label: 'Aguardando aprovação', color: 'warning' },
-  aprovada: { label: 'Aprovada', color: 'info' },
-  em_execucao: { label: 'Em execução', color: 'info' },
-  concluida: { label: 'Concluída', color: 'success' },
-  entregue: { label: 'Entregue', color: 'neutral' },
-  cancelada: { label: 'Cancelada', color: 'error' }
-}
-
-const PAGAMENTO_META = {
-  pendente: { label: 'Pendente', color: 'warning' as const },
-  parcial: { label: 'Parcial', color: 'info' as const },
-  pago: { label: 'Pago', color: 'success' as const }
-}
-
-const ITEM_META = {
-  pendente: { label: 'Pendente', color: 'warning' as const },
-  aprovado: { label: 'Aprovado', color: 'success' as const },
-  recusado: { label: 'Recusado', color: 'error' as const }
-}
-
-const STATUS_LISTA: StatusOS[] = [
-  'aberta',
-  'em_diagnostico',
-  'aguardando_aprovacao',
-  'aprovada',
-  'em_execucao',
-  'concluida',
-  'entregue',
-  'cancelada'
-]
-
-const RESPONSAVEIS = [
-  { label: 'Responsável padrão', value: 1 }
-]
-
 export function useOS() {
   function statusMeta(status: StatusOS) {
     return STATUS_META[status] ?? { label: status, color: 'neutral' as const }
   }
 
   function formatarDinheiro(centavos?: number | null) {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
-      .format(Math.round(Number(centavos || 0)) / 100)
+    return formatarMoeda(Math.round(Number(centavos || 0)))
   }
 
   /** "85,50" | "85" | "1.234,5" → centavos (inteiro, sem float). */
@@ -180,6 +145,7 @@ export function useOS() {
     PAGAMENTO_META,
     ITEM_META,
     RESPONSAVEIS,
+    TIPO_NOTA,
     statusMeta,
     formatarDinheiro,
     parseCentavos,

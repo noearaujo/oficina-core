@@ -103,6 +103,7 @@ function abrirOS(_e: Event, row: { original: OSView }) {
             label="Tentar novamente"
             color="error"
             variant="soft"
+            :loading="status === 'pending'"
             @click="() => refresh()"
           />
         </template>
