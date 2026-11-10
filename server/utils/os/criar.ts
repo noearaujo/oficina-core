@@ -110,10 +110,21 @@ export async function editarOS(
           || (dados.quilometragem !== undefined && dados.quilometragem !== os.quilometragem)
           || (dados.previsaoEntrega !== undefined && dados.previsaoEntrega !== os.previsaoEntrega)
           || (dados.funcionarioId !== undefined && dados.funcionarioId !== os.funcionarioId)
+          || (dados.clienteId !== undefined && dados.clienteId !== os.clienteId)
+          || (dados.veiculoId !== undefined && dados.veiculoId !== os.veiculoId)
 
       if (tentouOutroCampo) {
         erro(403, 'Mecânico pode editar apenas o diagnóstico da OS')
       }
+    }
+
+    if (dados.clienteId !== undefined) {
+      const cliente = await db.get<ClienteRecord>(unidadeId, 'clientes', dados.clienteId)
+      if (!cliente || cliente.deletedAt) erro(404, 'Cliente não encontrado')
+    }
+    if (dados.veiculoId !== undefined) {
+      const veiculo = await db.get<VeiculoRecord>(unidadeId, 'veiculos', dados.veiculoId)
+      if (!veiculo || veiculo.deletedAt) erro(404, 'Veículo não encontrado')
     }
 
     const agora = new Date().toISOString()
@@ -126,6 +137,8 @@ export async function editarOS(
     if (dados.avarias !== undefined) camposAtualizados.avarias = dados.avarias
     if (dados.combustivel !== undefined) camposAtualizados.combustivel = dados.combustivel
     if (dados.funcionarioId !== undefined) camposAtualizados.funcionarioId = dados.funcionarioId
+    if (dados.clienteId !== undefined) camposAtualizados.clienteId = dados.clienteId
+    if (dados.veiculoId !== undefined) camposAtualizados.veiculoId = dados.veiculoId
 
     if (dados.quilometragem !== undefined) {
       camposAtualizados.quilometragem = dados.quilometragem === null ? undefined : dados.quilometragem

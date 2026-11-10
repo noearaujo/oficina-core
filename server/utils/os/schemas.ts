@@ -74,6 +74,8 @@ export const editarOsSchema = z.object({
     vazioParaUndefined,
     z.coerce.number().int().positive().optional()
   ),
+  clienteId: z.preprocess(vazioParaUndefined, z.coerce.number().int().positive().optional()),
+  veiculoId: z.preprocess(vazioParaUndefined, z.coerce.number().int().positive().optional()),
   role: z.string().trim().optional(),
   usuarioId: z.preprocess(vazioParaUndefined, z.coerce.number().int().positive().optional())
 }).transform(d => ({
@@ -84,6 +86,8 @@ export const editarOsSchema = z.object({
   quilometragem: d.quilometragem,
   previsaoEntrega: d.previsaoEntrega,
   funcionarioId: d.funcionarioId,
+  clienteId: d.clienteId,
+  veiculoId: d.veiculoId,
   role: d.role,
   usuarioId: d.usuarioId
 }))
