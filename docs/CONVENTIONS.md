@@ -43,7 +43,7 @@
 | Campos | Formato |
 |---|---|
 | ≤ 6 campos, 1 seção | **Modal** |
-| ≥ 7 campos ou múltiplas seções | **Página** (`/novo` e `/[id]/editar`) |
+| ≥ 7 campos ou múltiplas seções | **Página** (`/novo` e `/[entidadeId]/editar`) |
 
 ---
 
@@ -93,7 +93,7 @@
 | `UBadge variant="subtle"` para status/tipo | Padrão visual |
 | `UButton color="neutral" variant="outline"` para ações secundárias | Padrão visual |
 | `window.confirm` para exclusão | Funcional (MVP) |
-| `navigateTo(redirect \|\| /entidade/:id)` após POST | Redireciona pro detalhe |
+| `navigateTo(redirect \|\| /entidade/:resourceId)` após POST | Redireciona pro detalhe |
 | `await` em `useFetch` de página principal | Garante dados antes do render |
 | `default: () => []` em `useFetch` de arrays | Evita `undefined` |
 | `:loading` no `UForm` | Desabilita todo o form |
@@ -163,7 +163,7 @@ Ao criar uma nova página, verificar:
 - [ ] `DashboardDataField` para campos
 - [ ] `DashboardListItem` para linhas clicáveis (quando navegação)
 - [ ] Toast com `color` (success/error/neutral)
-- [ ] `navigateTo(redirect || /entidade/:id)` após POST (página)
+- [ ] `navigateTo(redirect || /entidade/:resourceId)` após POST (página)
 - [ ] Types em `app/types/index.d.ts` (se compartilhado)
 - [ ] Sem `resolveComponent`, sem `w-full` manual, sem `max-w-5xl`
 - [ ] `window.confirm` ao mudar tipo/proprietário (edição)
@@ -191,3 +191,36 @@ O `AGENTS.md` no repo é o atalho prático de código (~200 linhas, 15 seções)
 ---
 
 > **Fim do CONVENTIONS.md.**
+
+
+## Rotas e parâmetros dinâmicos
+
+### Nomenclatura obrigatória
+
+| Entidade | Parâmetro |
+|---|---|
+| Unidade | `unidadeId` |
+| Cliente | `clienteId` |
+| Veículo | `veiculoId` |
+| Ordem de serviço | `osId` |
+| Venda | `vendaId` |
+| Carteira | `carteiraId` |
+| Item do catálogo | `itemId` |
+| Item de estoque vinculado ao catálogo | `catalogoId` |
+| Caixa | `caixaId` |
+| Agendamento | `agendamentoId` |
+| Lançamento | `lancamentoId` |
+
+Não utilizar `[id]` genérico em rotas dinâmicas. Em rotas aninhadas, cada entidade deve possuir seu próprio parâmetro nomeado, por exemplo `/unidade/:unidadeId/clientes/:clienteId`.
+
+### Acesso aos parâmetros
+
+- **Frontend:** `useRoute().params.unidadeId`, `useRoute().params.clienteId` etc.
+- **Backend:** `getRouterParam(event, 'unidadeId')`, `getRouterParam(event, 'clienteId')` etc.
+- Não utilizar regex, `split()` ou inspeção de `route.path`/`pathname` para recuperar parâmetros.
+- Não criar fallbacks para `id` ou outros nomes antigos.
+- Validar IDs numéricos como safe integer maior que zero.
+- A mudança de nome interno não modifica a URL pública.
+- A validação de autorização e de pertencimento à unidade continua obrigatória no backend.
+
+Decisão arquitetural: [015 — Parâmetros semânticos nas rotas](decisions/015-parametros-semanticos-de-rotas.md).

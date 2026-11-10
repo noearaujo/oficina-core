@@ -4,7 +4,7 @@ const _useDashboard = () => {
   const route = useRoute()
   const router = useRouter()
   const isNotificationsSlideoverOpen = ref(false)
-  const unidadeId = computed(() => route.path.match(/\/unidade\/([^/]+)/)?.[1] ?? (route.params.id ? String(route.params.id) : '1'))
+  const unidadeId = computed(() => String(route.params.unidadeId ?? ''))
 
   defineShortcuts({
     'g-h': () => router.push(`/unidade/${unidadeId.value}`),

@@ -17,7 +17,7 @@ paths:
 | Float para dinheiro | Sempre inteiro em centavos |
 | Calcular "hoje"/período com `new Date()` direto | Usar `datas.ts` (fuso da unidade) |
 | Armazenar total/saldo/badge | Sempre derivado |
-| Rota de recurso de unidade na raiz (`/api/<recurso>`) | Padrão novo exige escopo: `/api/unidade/[id]/<recurso>` |
+| Rota de recurso de unidade na raiz (`/api/<recurso>`) | Padrão novo exige escopo: `/api/unidade/[unidadeId]/<recurso>` |
 
 ## SEMPRE
 
@@ -25,7 +25,7 @@ paths:
 |---|---|
 | `PUT` retorna o objeto atualizado | Consistência |
 | `unidadeId` em toda query de unidade | Isolamento multi-tenant |
-| Rotas de unidade em `server/api/unidade/[id]/...` | Padrão de rotas multi-tenant |
+| Rotas de unidade em `server/api/unidade/[unidadeId]/...` | Padrão de rotas multi-tenant |
 | Validar `unidadeId` como safe integer > 0 | Segurança e integridade de dados |
 | Placa: **sempre** UPPERCASE | Busca canônica |
 | Datas: ISO string | Migração D1 |
@@ -35,17 +35,20 @@ paths:
 ## Padrão de Rotas
 
 Todas as rotas de domínio operacional pertencem a uma unidade:
-- **Estrutura de arquivos**: `server/api/unidade/[id]/<dominio>/...`
-- **Prefixos de URL**: `/api/unidade/:id/<dominio>` (ex.: `clientes`, `veiculos`, `catalogo`, `estoque`, `os`, `caixas`, `carteiras`)
-- **Validação de `unidadeId`**: extrair e validar obrigatoriamente (`Number.isSafeInteger(unidadeId) && unidadeId > 0`)
-- **Rotas com `[id]` duplo** (ex.: `unidade/[id]/catalogo/[id].put.ts`): extrair `unidadeId` via `pathname.match(/\/api\/unidade\/(\d+)/)` e o ID do recurso via `getRouterParam(event, 'id')`
+- **Estrutura de arquivos**: `server/api/unidade/[unidadeId]/<dominio>/...`
+- **Prefixos de URL**: `/api/unidade/:unidadeId/<dominio>` (ex.: `clientes`, `veiculos`, `catalogo`, `estoque`, `os`, `caixa`, `carteiras`)
+- **Parâmetros de recurso**: usar nomes semânticos, como `[clienteId]`, `[veiculoId]`, `[itemId]`, `[catalogoId]`, `[carteiraId]`, `[osId]`, `[vendaId]`, `[caixaId]`, `[agendamentoId]` e `[lancamentoId]`.
+- **Extração**: usar exclusivamente `getRouterParam(event, '<nomeSemantico>')`; nunca usar regex, `pathname.match()`, `split()` ou fallback para descobrir parâmetros na URL.
+- **Validação de IDs**: validar como safe integer maior que zero antes de consultar dados.
 - **Rotas globais (fora de unidade)**: apenas `/api/auth/...` e `/api/admin/...`
 
 ## Checklist Backend & API
 
 Ao criar ou atualizar endpoints e regras de servidor:
 
-- [ ] Rota segue o padrão `server/api/unidade/[id]/<dominio>/...` (exceto auth/admin)
+- [ ] Rota segue o padrão `server/api/unidade/[unidadeId]/<dominio>/...` (exceto auth/admin)
+- [ ] Todo parâmetro dinâmico tem nome semântico; não existe `[id]` genérico
+- [ ] Parâmetros são obtidos por `getRouterParam()` com o nome exato; sem regex ou fallback legado
 - [ ] `unidadeId` validado e presente em toda query (multi-tenant)
 - [ ] `PUT` retorna objeto atualizado (backend)
 - [ ] Papel verificado no middleware e na API (PRD §3.5)

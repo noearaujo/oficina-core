@@ -35,4 +35,12 @@ paths:
 | Campos | Formato |
 |---|---|
 | ≤ 6 campos, 1 seção | **Modal** |
-| ≥ 7 campos ou múltiplas seções | **Página** (`/novo` e `/[id]/editar`) |
+| ≥ 7 campos ou múltiplas seções | **Página** (`/novo` e `/[entidadeId]/editar`) |
+
+
+## Identificadores e rotas
+
+- IDs em rotas devem ter nomes semânticos e específicos da entidade (`unidadeId`, `clienteId`, `veiculoId` etc.); `[id]` genérico é proibido.
+- A URL pública não muda ao renomear o identificador interno do parâmetro.
+- Não interpretar caminhos manualmente para extrair IDs: frontend usa `useRoute().params`; backend usa `getRouterParam()`.
+- Não manter compatibilidade artificial com nomes antigos por meio de fallbacks.

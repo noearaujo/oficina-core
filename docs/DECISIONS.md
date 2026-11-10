@@ -24,6 +24,7 @@
 | [ADR-012](decisions/012-pdv-restrito-a-produtos.md) | PDV Restrito a Produtos do Catálogo | ✅ Aprovado | 05/11/2026 | 1.9 |
 | [ADR-013](decisions/013-carteiras-modulo-independente-e-regras.md) | Carteiras como Módulo Próprio e Regras de Integridade | ✅ Aprovado | 05/11/2026 | 1.10 |
 | [ADR-014](decisions/014-ux-detalhe-os-tabs-resumo-historico.md) | Redesenho da Tela de Detalhe da OS (Tabs, Resumo, Histórico e Edição) | ✅ Aprovado | 07/11/2026 | 1.10.2 |
+| [ADR-015](decisions/015-parametros-semanticos-de-rotas.md) | Parâmetros semânticos nas rotas | ✅ Aprovado | 10/11/2026 | — |
 
 ---
 
@@ -65,3 +66,8 @@
 | PDV Restrito a Produtos | ✅ Aprovado | 1.9 | [ADR-012](decisions/012-pdv-restrito-a-produtos.md) |
 | Carteiras como Módulo Próprio e Integridade Relacional | ✅ Aprovado | 1.10 | [ADR-013](decisions/013-carteiras-modulo-independente-e-regras.md) |
 | Redesenho UX do Detalhe da OS (Tabs, Histórico e Edição) | ✅ Aprovado | 1.10.2 | [ADR-014](decisions/014-ux-detalhe-os-tabs-resumo-historico.md) |
+
+
+## 015 — Parâmetros semânticos nas rotas
+
+Ver [015 — Parâmetros semânticos nas rotas](decisions/015-parametros-semanticos-de-rotas.md). A decisão proíbe `[id]` genérico e extração manual de parâmetros por regex.

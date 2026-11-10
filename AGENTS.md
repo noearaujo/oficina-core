@@ -26,27 +26,27 @@
 - Espécie: pagamento em `dinheiro` exige sessão de Caixa aberta (UI desabilita + API recusa).
 - Carteiras: acesso via `server/utils/carteiras.ts`; exclusão exige A+ e bloqueia se houver sessão aberta.
 
-# Rotas
-Todas as rotas operacionais são aninhadas sob o escopo de unidade (`/unidade/[id]/`):
-- `/unidade/:id` — Dashboard da unidade
-- `/unidade/:id/clientes` — Listagem de clientes
-- `/unidade/:id/clientes/novo` — Novo cliente
-- `/unidade/:id/clientes/:id` — Detalhe do cliente
-- `/unidade/:id/clientes/:id/editar` — Editar cliente
-- `/unidade/:id/veiculos` — Listagem de veículos
-- `/unidade/:id/veiculos/novo` — Novo veículo
-- `/unidade/:id/veiculos/:id` — Detalhe do veículo
-- `/unidade/:id/veiculos/:id/editar` — Editar veículo
-- `/unidade/:id/catalogo` — Catálogo de serviços e produtos (listagem members-style + modal)
-- *(Próximos módulos do MVP)*: `/unidade/:id/estoque`, `/unidade/:id/os`, `/unidade/:id/caixas`, `/unidade/:id/carteiras`, `/unidade/:id/pdv`, `/unidade/:id/agenda`, `/unidade/:id/relatorios`, `/unidade/:id/lixeira`
-- Rotas globais/admin: `/login`, `/onboarding`, `/unidades`, `/usuarios`
+# Rotas e parâmetros
+
+Todas as rotas operacionais são aninhadas sob o escopo de unidade (`/unidade/[unidadeId]/`). Os nomes dos parâmetros dinâmicos devem identificar semanticamente a entidade: `[unidadeId]`, `[clienteId]`, `[veiculoId]`, `[osId]`, `[vendaId]`, `[carteiraId]`, `[itemId]`, `[catalogoId]`, `[caixaId]`, `[agendamentoId]` e `[lancamentoId]`, conforme o recurso.
+
+- É proibido criar parâmetros genéricos `[id]` em rotas novas ou manter `[id]` em rotas operacionais existentes.
+- Parâmetros aninhados devem ter nomes distintos: por exemplo, `/unidade/:unidadeId/clientes/:clienteId`.
+- Frontend: acessar parâmetros com `useRoute().params.<nomeSemantico>`; não interpretar `route.path`/`fullPath` com regex ou `split()` para recuperar IDs.
+- Backend: acessar parâmetros com `getRouterParam(event, '<nomeSemantico>')`; não extrair IDs de `getRequestURL(event).pathname`.
+- Não manter fallback para nomes antigos (`id`, `estoqueId` etc.). O nome acessado deve corresponder exatamente ao arquivo dinâmico.
+- Validar IDs numéricos como safe integer maior que zero antes de consultar dados.
+- A renomeação de parâmetros não altera os caminhos públicos da URL.
+- Toda operação continua obrigada a validar autorização e associação do usuário à `unidadeId`; conhecer o parâmetro não concede acesso.
+
+Exemplos de URLs (os segmentos continuam iguais): `/unidade/5/clientes/23`, `/api/unidade/5/veiculos/42` e `/api/unidade/5/os/100/itens/3`.
 
 # Estado
 | Feature | Status |
 |---|---|
 | Storage Adapter (`server/utils/storage.ts`) | Concluído (Fase 1) |
-| Clientes, Veículos, Catálogo (API + Frontend) | Concluído em `/unidade/[id]/` (Fase 1) |
-| Dashboard (Frontend) | Concluído em `/unidade/[id]/` (Fase 1) |
+| Clientes, Veículos, Catálogo (API + Frontend) | Concluído em `/unidade/[unidadeId]/` (Fase 1) |
+| Dashboard (Frontend) | Concluído em `/unidade/[unidadeId]/` (Fase 1) |
 | Estoque, OS, PDV, Agenda, Caixa, Carteiras, Relatórios, Lixeira | Pendente (MVP Fase 1) |
 | Base / Template Nuxt UI (`settings/`, `index.vue`) | Fase 2 (congelado) |
 | Migração Storage File → Cloudflare D1 | Fase 2 |
@@ -57,9 +57,9 @@ Todas as rotas operacionais são aninhadas sob o escopo de unidade (`/unidade/[i
 - Impressão: PrintPreview.vue (shell) + app/components/templates/ (templates A4)
 - `app/composables/` — Estado e lógica reutilizável de UI (`useAuth`, `useUnidade`, `useConfig`, `useOS`, `useSearch`)
 - `app/middleware/` — Guards de navegação client-side (`auth.global`, `unidade`, `role`)
-- `app/pages/` — Rotas da aplicação (`login`, `onboarding`, `unidades/`, `usuarios/`, `unidade/[id]/...`)
+- `app/pages/` — Rotas da aplicação (`login`, `onboarding`, `unidades/`, `usuarios/`, `unidade/[unidadeId]/...`)
 - `server/middleware/` — Autenticação e resolução de contexto/tenant na API (`auth`, `unidade`)
-- `server/api/` — Endpoints REST (`auth/`, `admin/`, `unidade/[id]/...`)
+- `server/api/` — Endpoints REST (`auth/`, `admin/`, `unidade/[unidadeId]/...`)
 - `server/utils/` — Regras de negócio, schemas Zod e acesso a dados (`storage`, `datas`, `dinheiro`, `estoque`, `os`, `caixas`, `carteiras`)
 - `docs/PRD.md` — Regras de negócio, entidades, fluxos e matriz de permissões (fonte de verdade)
 - `docs/ARCHITECTURE.md` — Stack, arquitetura de storage, árvore de arquivos, endpoints e schema D1

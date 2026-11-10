@@ -53,3 +53,4 @@ Impactos positivos, restrições introduzidas, débitos técnicos aceitos ou com
 | [012](012-pdv-restrito-a-produtos.md) | PDV Restrito a Produtos do Catálogo | ✅ Aprovado | 05/11/2026 | 1.9 | [012-pdv-restrito-a-produtos.md](012-pdv-restrito-a-produtos.md) |
 | [013](013-carteiras-modulo-independente-e-regras.md) | Carteiras como Módulo Próprio e Regras de Integridade | ✅ Aprovado | 05/11/2026 | 1.10 | [013-carteiras-modulo-independente-e-regras.md](013-carteiras-modulo-independente-e-regras.md) |
 | [014](014-ux-detalhe-os-tabs-resumo-historico.md) | Redesenho da Tela de Detalhe da OS (Tabs, Resumo, Histórico e Edição) | ✅ Aprovado | 07/11/2026 | 1.10.2 | [014-ux-detalhe-os-tabs-resumo-historico.md](014-ux-detalhe-os-tabs-resumo-historico.md) |
+| [015](015-parametros-semanticos-de-rotas.md) | Parâmetros semânticos nas rotas | ✅ Aprovado | 10/11/2026 | — | [015-parametros-semanticos-de-rotas.md](015-parametros-semanticos-de-rotas.md) |

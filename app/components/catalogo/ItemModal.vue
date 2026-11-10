@@ -15,7 +15,7 @@ const emit = defineEmits<{
 
 const route = useRoute()
 const toast = useToast()
-const unidadeId = computed(() => route.path.match(/\/unidade\/([^/]+)/)?.[1] ?? String(route.params.id))
+const unidadeId = computed(() => String(route.params.unidadeId ?? ''))
 const enviando = ref(false)
 
 const unidades = [

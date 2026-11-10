@@ -44,7 +44,7 @@ paths:
 | Campos | Formato |
 |---|---|
 | ≤ 6 campos, 1 seção | **Modal** |
-| ≥ 7 campos ou múltiplas seções | **Página** (`/novo` e `/[id]/editar`) |
+| ≥ 7 campos ou múltiplas seções | **Página** (`/novo` e `/[entidadeId]/editar`) |
 
 ---
 
@@ -86,7 +86,7 @@ paths:
 | `UBadge variant="subtle"` para status/tipo | Padrão visual |
 | `UButton color="neutral" variant="outline"` para ações secundárias | Padrão visual |
 | `window.confirm` para exclusão | Funcional (MVP) |
-| `navigateTo(redirect \|\| /entidade/:id)` após POST | Redireciona pro detalhe |
+| `navigateTo(redirect \|\| /entidade/:resourceId)` após POST | Redireciona pro detalhe |
 | `await` em `useFetch` de página principal | Garante dados antes do render |
 | `default: () => []` em `useFetch` de arrays | Evita `undefined` |
 | `:loading` no `UForm` | Desabilita todo o form |
@@ -148,7 +148,7 @@ Ao criar uma nova página, verificar:
 - [ ] `DashboardDataField` para campos
 - [ ] `DashboardListItem` para linhas clicáveis (quando navegação)
 - [ ] Toast com `color` (success/error/neutral)
-- [ ] `navigateTo(redirect || /entidade/:id)` após POST (página)
+- [ ] `navigateTo(redirect || /entidade/:resourceId)` após POST (página)
 - [ ] Types em `app/types/index.d.ts` (se compartilhado)
 - [ ] Sem `resolveComponent`, sem `w-full` manual, sem `max-w-5xl`
 - [ ] `window.confirm` ao mudar tipo/proprietário (edição)
@@ -168,3 +168,11 @@ Ao criar uma nova página, verificar:
 - Novo template: criar em `templates/`, usar via slot no PrintPreview
 - Zero fetch no PrintPreview: dados vêm de props (estado reativo)
 - Dependência: `modern-screenshot` (captura PNG)
+
+
+## Parâmetros de rota
+
+- Nomear parâmetros dinâmicos semanticamente: `[unidadeId]`, `[clienteId]`, `[veiculoId]`, `[osId]` etc. Nunca usar `[id]` genérico.
+- Obter valores por `const route = useRoute()` e `route.params.<nomeSemantico>`.
+- Não usar `route.path`, `route.fullPath`, regex ou `split()` para descobrir IDs que já existem em `route.params`.
+- Não criar fallbacks para parâmetros antigos ou para IDs presumidos. Tratar ausência de parâmetro como contexto inválido.

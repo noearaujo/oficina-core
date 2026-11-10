@@ -5,31 +5,31 @@
 ## 2026-11-08 (Sessões 3-8)
 
 ### Sessão 8 — [frontend] Catálogo e Dashboard
-- [frontend] Migra dashboard para rota aninhada `/unidade/[id]/`
-- [frontend] Migra catálogo para rota aninhada `/unidade/[id]/catalogo`
+- [frontend] Migra dashboard para rota aninhada `/unidade/[unidadeId]/`
+- [frontend] Migra catálogo para rota aninhada `/unidade/[unidadeId]/catalogo`
 - [frontend] Atualiza links de navegação no layout (`default.vue`) e composable (`useDashboard.ts`)
 - [frontend] Ajusta `ItemModal.vue` para chamar endpoints escopados por unidade
 
 ### Sessão 7 — [frontend] Clientes e Veículos
-- [frontend] Migra páginas de clientes para `/unidade/[id]/clientes` (listagem, novo, detalhe, editar)
-- [frontend] Migra páginas de veículos para `/unidade/[id]/veiculos` (listagem, novo, detalhe, editar)
+- [frontend] Migra páginas de clientes para `/unidade/[unidadeId]/clientes` (listagem, novo, detalhe, editar)
+- [frontend] Migra páginas de veículos para `/unidade/[unidadeId]/veiculos` (listagem, novo, detalhe, editar)
 - [frontend] Atualiza chamadas de `useFetch` e formulários para consumir APIs escopadas por unidade
 - [frontend] Ajusta links de navegação e redirecionamentos
 
 ### Sessão 6 — [api] Catálogo
-- [api] Migra endpoints de catálogo para `server/api/unidade/[id]/catalogo/` (GET, POST, PUT, DELETE)
+- [api] Migra endpoints de catálogo para `server/api/unidade/[unidadeId]/catalogo/` (GET, POST, PUT, DELETE)
 - [api] Implementa resolução de conflito de rotas com parâmetro duplo `[id]` via pathname regex
 - [api] Integração com `db` adapter e garantia de imutabilidade do tipo de item
 - [api] Remove rotas antigas `/api/catalogo/*`
 
 ### Sessão 5 — [api] Veículos
-- [api] Migra endpoints de veículos para `server/api/unidade/[id]/veiculos/` (GET, POST, PUT, DELETE)
+- [api] Migra endpoints de veículos para `server/api/unidade/[unidadeId]/veiculos/` (GET, POST, PUT, DELETE)
 - [api] Validação e coerção de `unidadeId` e integração com `db` adapter
 - [api] Normalização de placas em UPPERCASE
 - [api] Remove rotas antigas `/api/veiculos/*`
 
 ### Sessão 4 — [api] Clientes
-- [api] Migra endpoints de clientes para `server/api/unidade/[id]/clientes/` (GET, POST, PUT, DELETE)
+- [api] Migra endpoints de clientes para `server/api/unidade/[unidadeId]/clientes/` (GET, POST, PUT, DELETE)
 - [api] Validação de `unidadeId` e integração completa com `db` adapter
 - [api] Remove rotas antigas `/api/clientes/*`
 

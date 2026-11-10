@@ -93,7 +93,7 @@ Usuario (tenant/dono)
 
 ```
 /                          → Painel admin (dono do tenant)
-/unidade/[id]/             → Painel da oficina
+/unidade/[unidadeId]/             → Painel da oficina
 ```
 
 ### 2.4 MVP (single unidade)
@@ -656,7 +656,7 @@ interface Carteira {
 - Banco recebe Pix, crédito, débito, boleto e transferências bancárias; não é origem direta de abertura/reforço do Caixa. Para colocar dinheiro físico no Caixa vindo do Banco, registrar primeiro a retirada/entrada física no Cofre e depois a transferência Cofre → Caixa.
 - Saldo é calculado a partir do saldo inicial e dos lançamentos vinculados. Nenhuma movimentação pode deixar a Carteira com saldo negativo, salvo regra futura explícita de crédito/limite. Alterações de saldo inicial após a ativação exigem lançamento de ajuste auditável.
 - Carteiras não possuem estado aberto/fechado; podem ser desativadas apenas quando saldo zero e sem sessões/movimentos pendentes.
-- **Tela própria** (`/unidade/[id]/carteiras`): lista todas as Carteiras da unidade com saldo calculado, tipo e nome. Ações disponíveis: Nova Carteira, Transferir entre Carteiras, Despesa, Entrada externa, Renomear, Excluir.
+- **Tela própria** (`/unidade/[unidadeId]/carteiras`): lista todas as Carteiras da unidade com saldo calculado, tipo e nome. Ações disponíveis: Nova Carteira, Transferir entre Carteiras, Despesa, Entrada externa, Renomear, Excluir.
 - **Renomear:** G+. Sem guard (FK é por ID, não por nome). Lançamentos e sessões históricas não são afetados.
 - **Excluir:** A+. Hard delete com guard:
   - Se há **sessão aberta** usando a Carteira → bloqueia ("Feche a sessão antes de excluir").
@@ -793,7 +793,7 @@ interface Agendamento {
 **Regras:**
 - `realizado` → quando o carro chega e a OS é criada
 - `cancelado` → usuário cancela
-- Conversão: `POST /api/agenda/:id/converter` → cria OS (pré-preenche cliente + veículo + queixa)
+- Conversão: `POST /api/agenda/:agendamentoId/converter` → cria OS (pré-preenche cliente + veículo + queixa)
 - Calendário: Dia / Semana / Mês
 - Cores: 🔵 agendado, 🟣 em diagnóstico, 🟡 aguardando, 🟢 em execução/concluída (previsão), ⚪ entregue/cancelado
 
@@ -1219,7 +1219,7 @@ Despesas pagas diretamente pelo Cofre são lançamentos de saída vinculados à 
 - Despesas pagas diretamente pelo Cofre ou Banco são lançadas na respectiva Carteira.
 - Aporte e empréstimo de sócio podem entrar diretamente no Cofre ou em sessão aberta, sempre identificando contraparte e natureza.
 
-### 7.7 Tela de Caixa (`/unidade/[id]/caixa`)
+### 7.7 Tela de Caixa (`/unidade/[unidadeId]/caixa`)
 
 A tela apresenta os Caixas disponíveis ao usuário, seus estados, sessões abertas, responsáveis e saldos esperados. A identificação do Caixa é feita pelo nome configurado; o acesso respeita o role e a associação do usuário. Ao entrar em um Caixa, mostra abertura, entradas, saídas, reforços, sangrias, ajustes e ação de fechamento. Histórico de sessões fechadas permanece disponível para consulta conforme permissões. A sessão aberta oferece atalhos de **Retirada Rápida**, reforço, sangria e fechamento.
 
@@ -1227,7 +1227,7 @@ A tela apresenta os Caixas disponíveis ao usuário, seus estados, sessões aber
 
 ## 8. PDV (Venda Rápida)
 
-### 8.1 Tela (`/unidade/[id]/pdv`)
+### 8.1 Tela (`/unidade/[unidadeId]/pdv`)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -1274,7 +1274,7 @@ Os passos 2 a 4 são atômicos: se qualquer um falhar, nada é gravado.
 
 ## 9. Agenda
 
-### 9.1 Tela (`/unidade/[id]/agenda`)
+### 9.1 Tela (`/unidade/[unidadeId]/agenda`)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -1541,7 +1541,7 @@ const qDigits = q.replace(/\D/g, '')  // pra CPF/CNPJ
 
 1. Usuário clica "Excluir" → `window.confirm` → `deletedAt = now`
 2. Item some das listagens normais
-3. Aparece em `/unidade/[id]/lixeira` (com data + "Restaurar" + "Excluir definitivamente")
+3. Aparece em `/unidade/[unidadeId]/lixeira` (com data + "Restaurar" + "Excluir definitivamente")
 4. Após 30 dias → purge automático (hard delete) — **Fase 2** (job agendado)
 
 ### 12.3 Visibilidade
@@ -1556,9 +1556,9 @@ const qDigits = q.replace(/\D/g, '')  // pra CPF/CNPJ
 ### 13.1 Estrutura
 
 ```
-/unidade/[id]/relatorios          → Index (cards com links + resumo rápido)
-/unidade/[id]/relatorios/financeiro  → Resultado do período, saldos, a receber, a pagar, exportação CSV contábil
-/unidade/[id]/relatorios/caixa       → Sessões, fechamentos, sobras/quebras por Caixa
+/unidade/[unidadeId]/relatorios          → Index (cards com links + resumo rápido)
+/unidade/[unidadeId]/relatorios/financeiro  → Resultado do período, saldos, a receber, a pagar, exportação CSV contábil
+/unidade/[unidadeId]/relatorios/caixa       → Sessões, fechamentos, sobras/quebras por Caixa
 ```
 
 **Futuro (arquivos separados):**
@@ -1605,13 +1605,13 @@ Botões "Exportar CSV" na página Financeiro, com o filtro de período da págin
 
 **Formato:** UTF-8 com BOM, separador `;`, decimal com vírgula, datas `dd/mm/aaaa` (abre direto no Excel pt-BR).
 
-**Endpoint:** `GET /api/unidade/:id/relatorios/exportar-csv?tipo=os|lancamentos&dataInicio=&dataFim=`. Não confundir com `/backup/csv`, que é cópia de segurança por entidade, sem filtro de período.
+**Endpoint:** `GET /api/unidade/:unidadeId/relatorios/exportar-csv?tipo=os|lancamentos&dataInicio=&dataFim=`. Não confundir com `/backup/csv`, que é cópia de segurança por entidade, sem filtro de período.
 
 ---
 
 ## 14. Dashboard
 
-### 14.1 Tela (`/unidade/[id]/`)
+### 14.1 Tela (`/unidade/[unidadeId]/`)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -1676,7 +1676,7 @@ Mesmo fluxo em Settings → "Nova unidade".
 
 ## 16. Backup / Export
 
-### 16.1 Tela (`/unidade/[id]/configuracoes?tab=backup`)
+### 16.1 Tela (`/unidade/[unidadeId]/configuracoes?tab=backup`)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -1715,42 +1715,42 @@ Mesmo fluxo em Settings → "Nova unidade".
 | `/` | Dashboard admin | owner |
 | `/unidades` | Listagem de unidades | owner |
 | `/unidades/novo` | Criar unidade | owner |
-| `/unidades/[id]` | Detalhe da unidade | owner |
-| `/unidades/[id]/editar` | Editar unidade | owner |
+| `/unidades/[unidadeId]` | Detalhe da unidade | owner |
+| `/unidades/[unidadeId]/editar` | Editar unidade | owner |
 | `/usuarios` | Listagem de usuários | owner |
 | `/usuarios/novo` | Criar usuário | owner |
-| `/usuarios/[id]` | Detalhe (roles por unidade) | owner |
-| `/usuarios/[id]/editar` | Editar usuário | owner |
+| `/usuarios/[usuarioId]` | Detalhe (roles por unidade) | owner |
+| `/usuarios/[usuarioId]/editar` | Editar usuário | owner |
 | `/configuracoes` | Config global do tenant | owner |
 
-### 17.2 Painel da Unidade (`/unidade/[id]/`)
+### 17.2 Painel da Unidade (`/unidade/[unidadeId]/`)
 
 | Rota | Descrição | Papel (detalhe por ação na 3.5) |
 |---|---|---|
-| `/unidade/[id]/` | Dashboard | todos |
-| `/unidade/[id]/agenda` | Calendário (?view=dia\|semana\|mes) | todos |
-| `/unidade/[id]/os` | Listagem de OS | todos |
-| `/unidade/[id]/os/novo` | Criar OS | recepcionista, G+ |
-| `/unidade/[id]/os/[osId]` | Detalhe (?tab=resumo\|orcamento\|faturamento) | todos |
-| `/unidade/[id]/pdv` | Tela PDV | recepcionista, G+ |
-| `/unidade/[id]/pdv/[vendaId]` | Detalhe da venda (recibo) | todos |
-| `/unidade/[id]/clientes` | Listagem (cross-unit) | todos |
-| `/unidade/[id]/clientes/novo` | Criar cliente | recepcionista, G+ |
-| `/unidade/[id]/clientes/[clienteId]` | Detalhe | todos |
-| `/unidade/[id]/clientes/[clienteId]/editar` | Editar | recepcionista, G+ |
-| `/unidade/[id]/veiculos` | Listagem (só da unidade) | todos |
-| `/unidade/[id]/veiculos/novo` | Criar veículo | recepcionista, G+ |
-| `/unidade/[id]/veiculos/[veiculoId]` | Detalhe | todos |
-| `/unidade/[id]/veiculos/[veiculoId]/editar` | Editar | recepcionista, G+ |
-| `/unidade/[id]/catalogo` | Catálogo de serviços e produtos | ver: todos · editar: G+ |
-| `/unidade/[id]/estoque` | Estoque de produtos | ver: todos · ajustar: G+ |
-| `/unidade/[id]/caixa` | Caixas e sessões autorizadas | recepcionista, G+ |
-| `/unidade/[id]/carteiras` | Carteiras (lista, transferir, despesa, entrada, excluir) | G+ |
-| `/unidade/[id]/relatorios` | Index de relatórios | G+ |
-| `/unidade/[id]/relatorios/financeiro` | Financeiro + exportação CSV contábil | G+ |
-| `/unidade/[id]/relatorios/caixa` | Caixa (fechamentos) | G+ |
-| `/unidade/[id]/lixeira` | Soft delete | G+ |
-| `/unidade/[id]/configuracoes` | Config (?tab=oficina\|caixas\|funcionarios\|backup) | A+ |
+| `/unidade/[unidadeId]/` | Dashboard | todos |
+| `/unidade/[unidadeId]/agenda` | Calendário (?view=dia\|semana\|mes) | todos |
+| `/unidade/[unidadeId]/os` | Listagem de OS | todos |
+| `/unidade/[unidadeId]/os/novo` | Criar OS | recepcionista, G+ |
+| `/unidade/[unidadeId]/os/[osId]` | Detalhe (?tab=resumo\|orcamento\|faturamento) | todos |
+| `/unidade/[unidadeId]/pdv` | Tela PDV | recepcionista, G+ |
+| `/unidade/[unidadeId]/pdv/[vendaId]` | Detalhe da venda (recibo) | todos |
+| `/unidade/[unidadeId]/clientes` | Listagem (cross-unit) | todos |
+| `/unidade/[unidadeId]/clientes/novo` | Criar cliente | recepcionista, G+ |
+| `/unidade/[unidadeId]/clientes/[clienteId]` | Detalhe | todos |
+| `/unidade/[unidadeId]/clientes/[clienteId]/editar` | Editar | recepcionista, G+ |
+| `/unidade/[unidadeId]/veiculos` | Listagem (só da unidade) | todos |
+| `/unidade/[unidadeId]/veiculos/novo` | Criar veículo | recepcionista, G+ |
+| `/unidade/[unidadeId]/veiculos/[veiculoId]` | Detalhe | todos |
+| `/unidade/[unidadeId]/veiculos/[veiculoId]/editar` | Editar | recepcionista, G+ |
+| `/unidade/[unidadeId]/catalogo` | Catálogo de serviços e produtos | ver: todos · editar: G+ |
+| `/unidade/[unidadeId]/estoque` | Estoque de produtos | ver: todos · ajustar: G+ |
+| `/unidade/[unidadeId]/caixa` | Caixas e sessões autorizadas | recepcionista, G+ |
+| `/unidade/[unidadeId]/carteiras` | Carteiras (lista, transferir, despesa, entrada, excluir) | G+ |
+| `/unidade/[unidadeId]/relatorios` | Index de relatórios | G+ |
+| `/unidade/[unidadeId]/relatorios/financeiro` | Financeiro + exportação CSV contábil | G+ |
+| `/unidade/[unidadeId]/relatorios/caixa` | Caixa (fechamentos) | G+ |
+| `/unidade/[unidadeId]/lixeira` | Soft delete | G+ |
+| `/unidade/[unidadeId]/configuracoes` | Config (?tab=oficina\|caixas\|funcionarios\|backup) | A+ |
 
 ### 17.3 Rotas Públicas
 
@@ -1777,7 +1777,7 @@ Mesmo fluxo em Settings → "Nova unidade".
 
 | Item | Rota | Visível para |
 |---|---|---|
-| Dashboard | `/unidade/[id]/` | todos |
+| Dashboard | `/unidade/[unidadeId]/` | todos |
 | Agenda | `/agenda` | todos |
 | OS | `/os` | todos |
 | PDV | `/pdv` | `recepcionista`, G+ |

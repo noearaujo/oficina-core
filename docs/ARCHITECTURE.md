@@ -255,19 +255,19 @@ oficina-core/
 │   │   ├── unidades/
 │   │   │   ├── index.vue
 │   │   │   ├── novo.vue
-│   │   │   └── [id]/
+│   │   │   └── [unidadeId]/
 │   │   │       ├── index.vue
 │   │   │       └── editar.vue
 │   │   ├── usuarios/
 │   │   │   ├── index.vue
 │   │   │   ├── novo.vue
-│   │   │   └── [id]/
+│   │   │   └── [usuarioId]/
 │   │   │       ├── index.vue
 │   │   │       └── editar.vue
 │   │   ├── configuracoes/
 │   │   │   └── index.vue
 │   │   └── unidade/
-│   │       └── [id]/
+│   │       └── [unidadeId]/
 │   │           ├── index.vue
 │   │           ├── agenda/
 │   │           │   └── index.vue
@@ -329,20 +329,20 @@ oficina-core/
 │   │   │   ├── unidades/
 │   │   │   │   ├── index.get.ts
 │   │   │   │   ├── index.post.ts
-│   │   │   │   ├── [id].get.ts
-│   │   │   │   ├── [id].put.ts
-│   │   │   │   └── [id].delete.ts
+│   │   │   │   ├── [unidadeId].get.ts
+│   │   │   │   ├── [unidadeId].put.ts
+│   │   │   │   └── [unidadeId].delete.ts
 │   │   │   ├── usuarios/
 │   │   │   │   ├── index.get.ts
 │   │   │   │   ├── index.post.ts
-│   │   │   │   ├── [id].get.ts
-│   │   │   │   ├── [id].put.ts
-│   │   │   │   └── [id].delete.ts
+│   │   │   │   ├── [usuarioId].get.ts
+│   │   │   │   ├── [usuarioId].put.ts
+│   │   │   │   └── [usuarioId].delete.ts
 │   │   │   └── config/
 │   │   │       ├── index.get.ts
 │   │   │       └── index.put.ts
 │   │   └── unidade/
-│   │       └── [id]/
+│   │       └── [unidadeId]/
 │   │           ├── dashboard.get.ts
 │   │           ├── os/
 │   │           │   ├── index.get.ts
@@ -383,20 +383,20 @@ oficina-core/
 │   │           ├── clientes/
 │   │           │   ├── index.get.ts
 │   │           │   ├── index.post.ts
-│   │           │   ├── [id].get.ts
-│   │           │   ├── [id].put.ts
-│   │           │   └── [id].delete.ts
+│   │           │   ├── [clienteId].get.ts
+│   │           │   ├── [clienteId].put.ts
+│   │           │   └── [clienteId].delete.ts
 │   │           ├── veiculos/
 │   │           │   ├── index.get.ts
 │   │           │   ├── index.post.ts
-│   │           │   ├── [id].get.ts
-│   │           │   ├── [id].put.ts
-│   │           │   └── [id].delete.ts
+│   │           │   ├── [veiculoId].get.ts
+│   │           │   ├── [veiculoId].put.ts
+│   │           │   └── [veiculoId].delete.ts
 │   │           ├── catalogo/
 │   │           │   ├── index.get.ts
 │   │           │   ├── index.post.ts
-│   │           │   ├── [id].put.ts
-│   │           │   └── [id].delete.ts
+│   │           │   ├── [itemId].put.ts
+│   │           │   └── [itemId].delete.ts
 │   │           ├── estoque/
 │   │           │   ├── index.get.ts
 │   │           │   ├── ajustar.post.ts
@@ -417,16 +417,16 @@ oficina-core/
 │   │           │   ├── index.get.ts
 │   │           │   ├── index.post.ts
 │   │           │   ├── resumo.get.ts
-│   │           │   └── [id]/
+│   │           │   └── [lancamentoId]/
 │   │           │       └── estornar.post.ts
 │   │           ├── carteiras/
 │   │           │   ├── index.get.ts
 │   │           │   ├── index.post.ts
-│   │           │   ├── [id].put.ts
-│   │           │   ├── [id].delete.ts
+│   │           │   ├── [carteiraId].put.ts
+│   │           │   ├── [carteiraId].delete.ts
 │   │           │   ├── transferir.post.ts
-│   │           │   ├── [id]/despesa.post.ts
-│   │           │   └── [id]/entrada-externa.post.ts
+│   │           │   ├── [carteiraId]/despesa.post.ts
+│   │           │   └── [carteiraId]/entrada-externa.post.ts
 │   │           ├── relatorios/
 │   │           │   ├── financeiro.get.ts
 │   │           │   ├── caixa.get.ts
@@ -497,14 +497,14 @@ oficina-core/
 |---|---|---|
 | GET | `/api/admin/unidades` | Lista unidades do tenant |
 | POST | `/api/admin/unidades` | Cria unidade |
-| GET | `/api/admin/unidades/:id` | Detalhe |
-| PUT | `/api/admin/unidades/:id` | Atualiza |
-| DELETE | `/api/admin/unidades/:id` | Desativa |
+| GET | `/api/admin/unidades/:unidadeId` | Detalhe |
+| PUT | `/api/admin/unidades/:unidadeId` | Atualiza |
+| DELETE | `/api/admin/unidades/:unidadeId` | Desativa |
 | GET | `/api/admin/usuarios` | Lista usuários |
 | POST | `/api/admin/usuarios` | Cria usuário |
-| GET | `/api/admin/usuarios/:id` | Detalhe (roles por unidade) |
-| PUT | `/api/admin/usuarios/:id` | Atualiza |
-| DELETE | `/api/admin/usuarios/:id` | Desativa |
+| GET | `/api/admin/usuarios/:usuarioId` | Detalhe (roles por unidade) |
+| PUT | `/api/admin/usuarios/:usuarioId` | Atualiza |
+| DELETE | `/api/admin/usuarios/:usuarioId` | Desativa |
 | GET | `/api/admin/config` | Config global |
 | PUT | `/api/admin/config` | Atualiza |
 
@@ -512,42 +512,42 @@ oficina-core/
 
 | Método | Rota | Descrição | Restrição |
 |---|---|---|---|
-| GET | `/api/unidade/:id/os` | Lista (denormalizado + badge) | `?q=&status=&page=&dataInicio=&dataFim=` |
-| POST | `/api/unidade/:id/os` | Cria OS | — |
-| GET | `/api/unidade/:id/os/:osId` | Detalhe (1 call: OS + itens + lançamentos + notas + envios) | — |
-| PUT | `/api/unidade/:id/os/:osId` | Atualiza campos | `aberta` ou `em_diagnostico` |
-| DELETE | `/api/unidade/:id/os/:osId` | Soft delete | `aberta` |
-| POST | `/api/unidade/:id/os/:osId/status` | Transição | Transições válidas (PRD §5.1) |
-| POST | `/api/unidade/:id/os/:osId/ajustar` | Ajustar `{ motivo }` | `aguardando_aprovacao` |
-| POST | `/api/unidade/:id/os/:osId/aprovar` | Aprova todos (baixa o estoque dos produtos aprovados) | `aguardando_aprovacao` |
-| POST | `/api/unidade/:id/os/:osId/reverter` | Reverter `{ motivo }` (estorna o estoque dos itens baixados) | `aprovada`, A+, pago líquido = 0 |
-| GET | `/api/unidade/:id/os/:osId/envios` | Histórico de envios | — |
-| POST | `/api/unidade/:id/os/:osId/envios` | Registra envio `{ canal, itensIds }` | OS em estado que permita envio |
-| POST | `/api/unidade/:id/os/:osId/cancelar` | Cancelar `{ motivo }` (estorna o estoque dos itens baixados) | Antes de `concluida`, pago líquido = 0 |
-| POST | `/api/unidade/:id/os/:osId/itens` | Adiciona item(s) `{ catalogoId?, nome, tipo, quantidade, precoUnitario }` | `em_diagnostico` ou `em_execucao` |
-| PUT | `/api/unidade/:id/os/:osId/itens/:itemId` | Edita item | item `pendente`; bloqueado se `enviado = true` **E** OS em `aguardando_aprovacao` |
-| DELETE | `/api/unidade/:id/os/:osId/itens/:itemId` | Remove item (estorna o estoque se já baixado) | item `pendente`; bloqueado se `enviado = true` **E** OS em `aguardando_aprovacao` |
-| POST | `/api/unidade/:id/os/:osId/itens/:itemId/aprovar` | Aprova item (baixa o estoque de produto com `catalogoId`) | Item `pendente` |
-| POST | `/api/unidade/:id/os/:osId/itens/:itemId/recusar` | Recusa `{ motivo }` | Item `pendente` |
-| POST | `/api/unidade/:id/os/:osId/notas` | Adiciona nota `{ texto }` | — |
+| GET | `/api/unidade/:unidadeId/os` | Lista (denormalizado + badge) | `?q=&status=&page=&dataInicio=&dataFim=` |
+| POST | `/api/unidade/:unidadeId/os` | Cria OS | — |
+| GET | `/api/unidade/:unidadeId/os/:osId` | Detalhe (1 call: OS + itens + lançamentos + notas + envios) | — |
+| PUT | `/api/unidade/:unidadeId/os/:osId` | Atualiza campos | `aberta` ou `em_diagnostico` |
+| DELETE | `/api/unidade/:unidadeId/os/:osId` | Soft delete | `aberta` |
+| POST | `/api/unidade/:unidadeId/os/:osId/status` | Transição | Transições válidas (PRD §5.1) |
+| POST | `/api/unidade/:unidadeId/os/:osId/ajustar` | Ajustar `{ motivo }` | `aguardando_aprovacao` |
+| POST | `/api/unidade/:unidadeId/os/:osId/aprovar` | Aprova todos (baixa o estoque dos produtos aprovados) | `aguardando_aprovacao` |
+| POST | `/api/unidade/:unidadeId/os/:osId/reverter` | Reverter `{ motivo }` (estorna o estoque dos itens baixados) | `aprovada`, A+, pago líquido = 0 |
+| GET | `/api/unidade/:unidadeId/os/:osId/envios` | Histórico de envios | — |
+| POST | `/api/unidade/:unidadeId/os/:osId/envios` | Registra envio `{ canal, itensIds }` | OS em estado que permita envio |
+| POST | `/api/unidade/:unidadeId/os/:osId/cancelar` | Cancelar `{ motivo }` (estorna o estoque dos itens baixados) | Antes de `concluida`, pago líquido = 0 |
+| POST | `/api/unidade/:unidadeId/os/:osId/itens` | Adiciona item(s) `{ catalogoId?, nome, tipo, quantidade, precoUnitario }` | `em_diagnostico` ou `em_execucao` |
+| PUT | `/api/unidade/:unidadeId/os/:osId/itens/:itemId` | Edita item | item `pendente`; bloqueado se `enviado = true` **E** OS em `aguardando_aprovacao` |
+| DELETE | `/api/unidade/:unidadeId/os/:osId/itens/:itemId` | Remove item (estorna o estoque se já baixado) | item `pendente`; bloqueado se `enviado = true` **E** OS em `aguardando_aprovacao` |
+| POST | `/api/unidade/:unidadeId/os/:osId/itens/:itemId/aprovar` | Aprova item (baixa o estoque de produto com `catalogoId`) | Item `pendente` |
+| POST | `/api/unidade/:unidadeId/os/:osId/itens/:itemId/recusar` | Recusa `{ motivo }` | Item `pendente` |
+| POST | `/api/unidade/:unidadeId/os/:osId/notas` | Adiciona nota `{ texto }` | — |
 
 ### PDV
 
 | Método | Rota | Descrição |
 |---|---|---|
-| GET | `/api/unidade/:id/pdv` | Lista vendas |
-| POST | `/api/unidade/:id/pdv` | Cria venda + lançamento + baixa estoque |
-| GET | `/api/unidade/:id/pdv/:vendaId` | Detalhe da venda |
+| GET | `/api/unidade/:unidadeId/pdv` | Lista vendas |
+| POST | `/api/unidade/:unidadeId/pdv` | Cria venda + lançamento + baixa estoque |
+| GET | `/api/unidade/:unidadeId/pdv/:vendaId` | Detalhe da venda |
 
 ### Agenda
 
 | Método | Rota | Descrição | Parâmetros |
 |---|---|---|---|
-| GET | `/api/unidade/:id/agenda` | Lista (com OS para o calendário) | `?dataInicio=&dataFim=&view=` |
-| POST | `/api/unidade/:id/agenda` | Cria agendamento | — |
-| PUT | `/api/unidade/:id/agenda/:agId` | Atualiza (remarcar) | — |
-| DELETE | `/api/unidade/:id/agenda/:agId` | Cancela | — |
-| POST | `/api/unidade/:id/agenda/:agId/converter` | Converte em OS | — |
+| GET | `/api/unidade/:unidadeId/agenda` | Lista (com OS para o calendário) | `?dataInicio=&dataFim=&view=` |
+| POST | `/api/unidade/:unidadeId/agenda` | Cria agendamento | — |
+| PUT | `/api/unidade/:unidadeId/agenda/:agId` | Atualiza (remarcar) | — |
+| DELETE | `/api/unidade/:unidadeId/agenda/:agId` | Cancela | — |
+| POST | `/api/unidade/:unidadeId/agenda/:agId/converter` | Converte em OS | — |
 
 ### Clientes / Veículos
 
@@ -557,79 +557,79 @@ CRUD padrão. Clientes são **cross-unit** (filtro por `usuarioId`, não `unidad
 
 | Método | Rota | Descrição | Restrição |
 |---|---|---|---|
-| GET | `/api/unidade/:id/catalogo` | Lista itens | `?q=&tipo=` |
-| POST | `/api/unidade/:id/catalogo` | Cria item; se `produto`, cria também o `ItemEstoque` (aceita `quantidadeMinima` e saldo inicial → `MovimentoEstoque`) na mesma transação | G+ |
-| PUT | `/api/unidade/:id/catalogo/:id` | Edita dados/preços. Não altera saldo nem `tipo` | G+ |
-| DELETE | `/api/unidade/:id/catalogo/:id` | Exclui item (hard delete) | G+ |
-| GET | `/api/unidade/:id/estoque` | Lista `ItemEstoque JOIN ItemCatalogo` (saldo, badges) | `?q=&abaixoMinimo=` |
-| POST | `/api/unidade/:id/estoque/ajustar` | Entrada/saída manual `{ catalogoId, tipo, quantidade, observacao }`; gera `MovimentoEstoque` | G+ |
-| GET | `/api/unidade/:id/estoque/:catalogoId/movimentos` | Histórico de movimentos | — |
+| GET | `/api/unidade/:unidadeId/catalogo` | Lista itens | `?q=&tipo=` |
+| POST | `/api/unidade/:unidadeId/catalogo` | Cria item; se `produto`, cria também o `ItemEstoque` (aceita `quantidadeMinima` e saldo inicial → `MovimentoEstoque`) na mesma transação | G+ |
+| PUT | `/api/unidade/:unidadeId/catalogo/:itemId` | Edita dados/preços. Não altera saldo nem `tipo` | G+ |
+| DELETE | `/api/unidade/:unidadeId/catalogo/:itemId` | Exclui item (hard delete) | G+ |
+| GET | `/api/unidade/:unidadeId/estoque` | Lista `ItemEstoque JOIN ItemCatalogo` (saldo, badges) | `?q=&abaixoMinimo=` |
+| POST | `/api/unidade/:unidadeId/estoque/ajustar` | Entrada/saída manual `{ catalogoId, tipo, quantidade, observacao }`; gera `MovimentoEstoque` | G+ |
+| GET | `/api/unidade/:unidadeId/estoque/:catalogoId/movimentos` | Histórico de movimentos | — |
 
 ### Caixa
 
 | Método | Rota | Descrição | Parâmetros |
 |---|---|---|---|
-| GET | `/api/unidade/:id/caixas` | Lista Caixas acessíveis + estado das sessões | - |
-| GET | `/api/unidade/:id/sessoes-caixa` | Lista todas as sessões da unidade | `?status=aberta\|fechada` |
-| POST | `/api/unidade/:id/caixas` | Cria Caixa `{ nome }` | - |
-| PUT | `/api/unidade/:id/caixas/:caixaId` | Atualiza nome/ativo | - |
-| PUT | `/api/unidade/:id/caixas/:caixaId/usuarios` | Define associações | - |
-| GET | `/api/unidade/:id/caixas/:caixaId/sessoes` | Histórico de sessões | - |
-| GET | `/api/unidade/:id/caixas/:caixaId/sessao-aberta` | Sessão aberta + resumo + lançamentos | - |
-| POST | `/api/unidade/:id/caixas/:caixaId/abrir` | `{ valorAbertura, carteiraCofreId? }` |
-| POST | `/api/unidade/:id/caixas/:caixaId/fechar` | `{ valorContado, carteiraCofreId, motivo? }` | - |
-| POST | `/api/unidade/:id/caixas/:caixaId/reforco` | `{ valor, carteiraCofreId, motivo }` | - |
-| POST | `/api/unidade/:id/caixas/:caixaId/sangria` | `{ valor, carteiraCofreId, motivo }` | - |
-| POST | `/api/unidade/:id/caixas/:caixaId/despesa` | Despesa em espécie `{ valor, categoria, motivo }`. **Retirada Rápida** = mesma rota com `categoria: 'retirada_rapida'` (só `valor` + `motivo`) | - |
+| GET | `/api/unidade/:unidadeId/caixas` | Lista Caixas acessíveis + estado das sessões | - |
+| GET | `/api/unidade/:unidadeId/sessoes-caixa` | Lista todas as sessões da unidade | `?status=aberta\|fechada` |
+| POST | `/api/unidade/:unidadeId/caixas` | Cria Caixa `{ nome }` | - |
+| PUT | `/api/unidade/:unidadeId/caixas/:caixaId` | Atualiza nome/ativo | - |
+| PUT | `/api/unidade/:unidadeId/caixas/:caixaId/usuarios` | Define associações | - |
+| GET | `/api/unidade/:unidadeId/caixas/:caixaId/sessoes` | Histórico de sessões | - |
+| GET | `/api/unidade/:unidadeId/caixas/:caixaId/sessao-aberta` | Sessão aberta + resumo + lançamentos | - |
+| POST | `/api/unidade/:unidadeId/caixas/:caixaId/abrir` | `{ valorAbertura, carteiraCofreId? }` |
+| POST | `/api/unidade/:unidadeId/caixas/:caixaId/fechar` | `{ valorContado, carteiraCofreId, motivo? }` | - |
+| POST | `/api/unidade/:unidadeId/caixas/:caixaId/reforco` | `{ valor, carteiraCofreId, motivo }` | - |
+| POST | `/api/unidade/:unidadeId/caixas/:caixaId/sangria` | `{ valor, carteiraCofreId, motivo }` | - |
+| POST | `/api/unidade/:unidadeId/caixas/:caixaId/despesa` | Despesa em espécie `{ valor, categoria, motivo }`. **Retirada Rápida** = mesma rota com `categoria: 'retirada_rapida'` (só `valor` + `motivo`) | - |
 
 ### Lançamentos
 
 | Método | Rota | Descrição | Parâmetros |
 |---|---|---|---|
-| GET | `/api/unidade/:id/lancamentos` | Lista | `?carteiraId=&sessaoCaixaId=&tipo=&dataInicio=&dataFim=&documentoId=&fornecedorId=` |
-| POST | `/api/unidade/:id/lancamentos` | Lança | — |
-| PUT | `/api/unidade/:id/lancamentos/:id` | Edita `data` (grava `LancamentoHistorico`) | A+ |
-| GET | `/api/unidade/:id/lancamentos/resumo` | Total entradas/saídas por período | — |
-| POST | `/api/unidade/:id/lancamentos/:id/estornar` | Estorna | — |
+| GET | `/api/unidade/:unidadeId/lancamentos` | Lista | `?carteiraId=&sessaoCaixaId=&tipo=&dataInicio=&dataFim=&documentoId=&fornecedorId=` |
+| POST | `/api/unidade/:unidadeId/lancamentos` | Lança | — |
+| PUT | `/api/unidade/:unidadeId/lancamentos/:lancamentoId` | Edita `data` (grava `LancamentoHistorico`) | A+ |
+| GET | `/api/unidade/:unidadeId/lancamentos/resumo` | Total entradas/saídas por período | — |
+| POST | `/api/unidade/:unidadeId/lancamentos/:lancamentoId/estornar` | Estorna | — |
 
 ### Carteiras
 
 | Método | Rota | Descrição |
 |---|---|---|
-| GET | `/api/unidade/:id/carteiras` | Lista + saldos calculados |
-| POST | `/api/unidade/:id/carteiras` | Cria Carteira |
-| PUT | `/api/unidade/:id/carteiras/:id` | Atualiza nome/ativo |
-| DELETE | `/api/unidade/:id/carteiras/:id` | Exclui (A+; guard: sessão aberta bloqueia; lançamentos → `carteiraId` NULL) |
-| POST | `/api/unidade/:id/carteiras/transferir` | `{ origemCarteiraId, destinoCarteiraId, valor, motivo }` |
-| POST | `/api/unidade/:id/carteiras/:id/despesa` | Despesa paga pela Carteira |
-| POST | `/api/unidade/:id/carteiras/:id/entrada-externa` | Aporte/empréstimo |
+| GET | `/api/unidade/:unidadeId/carteiras` | Lista + saldos calculados |
+| POST | `/api/unidade/:unidadeId/carteiras` | Cria Carteira |
+| PUT | `/api/unidade/:unidadeId/carteiras/:carteiraId` | Atualiza nome/ativo |
+| DELETE | `/api/unidade/:unidadeId/carteiras/:carteiraId` | Exclui (A+; guard: sessão aberta bloqueia; lançamentos → `carteiraId` NULL) |
+| POST | `/api/unidade/:unidadeId/carteiras/transferir` | `{ origemCarteiraId, destinoCarteiraId, valor, motivo }` |
+| POST | `/api/unidade/:unidadeId/carteiras/:carteiraId/despesa` | Despesa paga pela Carteira |
+| POST | `/api/unidade/:unidadeId/carteiras/:carteiraId/entrada-externa` | Aporte/empréstimo |
 
 ### Relatórios
 
 | Método | Rota | Descrição |
 |---|---|---|
-| GET | `/api/unidade/:id/relatorios/financeiro` | `?dataInicio=&dataFim=` |
-| GET | `/api/unidade/:id/relatorios/caixa` | `?dataInicio=&dataFim=` |
-| GET | `/api/unidade/:id/relatorios/exportar-csv` | `?tipo=os\|lancamentos&dataInicio=&dataFim=` |
+| GET | `/api/unidade/:unidadeId/relatorios/financeiro` | `?dataInicio=&dataFim=` |
+| GET | `/api/unidade/:unidadeId/relatorios/caixa` | `?dataInicio=&dataFim=` |
+| GET | `/api/unidade/:unidadeId/relatorios/exportar-csv` | `?tipo=os\|lancamentos&dataInicio=&dataFim=` |
 
 ### Config / Funcionários / Backup
 
 | Método | Rota | Descrição |
 |---|---|---|
-| GET | `/api/unidade/:id/config` | Retorna config |
-| PUT | `/api/unidade/:id/config` | Atualiza |
-| GET | `/api/unidade/:id/funcionarios` | Lista (read-only) |
-| GET | `/api/unidade/:id/backup/export` | JSON completo |
-| POST | `/api/unidade/:id/backup/import` | Substitui tudo |
-| GET | `/api/unidade/:id/backup/csv` | `?entidade=clientes\|veiculos\|os\|lancamentos\|catalogo\|estoque\|vendas` |
+| GET | `/api/unidade/:unidadeId/config` | Retorna config |
+| PUT | `/api/unidade/:unidadeId/config` | Atualiza |
+| GET | `/api/unidade/:unidadeId/funcionarios` | Lista (read-only) |
+| GET | `/api/unidade/:unidadeId/backup/export` | JSON completo |
+| POST | `/api/unidade/:unidadeId/backup/import` | Substitui tudo |
+| GET | `/api/unidade/:unidadeId/backup/csv` | `?entidade=clientes\|veiculos\|os\|lancamentos\|catalogo\|estoque\|vendas` |
 
 ### Lixeira
 
 | Método | Rota | Descrição | Parâmetros |
 |---|---|---|---|
-| GET | `/api/unidade/:id/lixeira` | Lista soft-deleted | `?entidade=os\|cliente\|veiculo` |
-| PUT | `/api/unidade/:id/lixeira/:entidadeId` | Restaurar | — |
-| DELETE | `/api/unidade/:id/lixeira/:entidadeId` | Excluir definitivo | — |
+| GET | `/api/unidade/:unidadeId/lixeira` | Lista soft-deleted | `?entidade=os\|cliente\|veiculo` |
+| PUT | `/api/unidade/:unidadeId/lixeira/:entidadeId` | Restaurar | — |
+| DELETE | `/api/unidade/:unidadeId/lixeira/:entidadeId` | Excluir definitivo | — |
 
 ---
 
@@ -1017,3 +1017,10 @@ CREATE UNIQUE INDEX idx_lancamentos_estorno_unico ON lancamentos(estorno_de) WHE
 > **Fim do ARCHITECTURE.md.**
 
 ---
+
+
+## Convenção de parâmetros dinâmicos
+
+As árvores de rotas devem utilizar identificadores semânticos, nunca `[id]` genérico. O contexto operacional usa `[unidadeId]`; recursos usam seus nomes específicos (`[clienteId]`, `[veiculoId]`, `[osId]`, `[vendaId]`, `[carteiraId]`, `[itemId]`, `[catalogoId]`, `[caixaId]`, `[agendamentoId]`, `[lancamentoId]`). No frontend, ler por `useRoute().params`; no Nitro/H3, por `getRouterParam(event, '<nome>')`. Regex e inspeção manual de URL para obter parâmetros são proibidas. A URL pública permanece inalterada.
+
+Decisão: [ADR-015 — Parâmetros semânticos nas rotas](decisions/015-parametros-semanticos-de-rotas.md).

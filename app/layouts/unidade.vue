@@ -5,7 +5,7 @@ const route = useRoute()
 const toast = useToast()
 
 const open = ref(false)
-const unidadeId = computed(() => route.path.match(/\/unidade\/([^/]+)/)?.[1] ?? (route.params.id ? String(route.params.id) : '1'))
+const unidadeId = computed(() => String(route.params.unidadeId ?? ''))
 
 const links = computed<NavigationMenuItem[][]>(() => [[{
   label: 'Dashboard',

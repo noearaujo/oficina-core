@@ -31,49 +31,40 @@ Acesse: `http://localhost:3000`
 
 ---
 
-## Estrutura
+## Estrutura atual
 
-```
+```text
 app/
-├── types/
-│   └── index.d.ts              # Tipos compartilhados (Cliente, Veiculo, ItemCatalogo)
-├── components/
-│   ├── dashboard/
-│   │   ├── SectionHeader.vue   # Título de seção (naked)
-│   │   ├── DataField.vue       # Campo de dados (label + valor)
-│   │   └── ListItem.vue        # Linha clicável (avatar/icon + texto + chevron)
-│   └── catalogo/
-│       └── ItemModal.vue       # Modal novo/editar item do catálogo
 ├── pages/
-│   ├── clientes/
-│   │   ├── index.vue           # Listagem
-│   │   ├── novo.vue            # Cadastro
-│   │   └── [id]/
-│   │       ├── index.vue       # Detalhe
-│   │       └── editar.vue      # Edição
-│   ├── veiculos/
-│   │   ├── index.vue
-│   │   ├── novo.vue
-│   │   └── [id]/
-│   │       ├── index.vue
-│   │       └── editar.vue
-│   ├── catalogo/
-│   │   └── index.vue           # Listagem + modal (novo/editar)
-│   └── os/                     # (em desenvolvimento)
-└── layouts/
-    └── default.vue
+│   └── unidade/
+│       └── [unidadeId]/
+│           ├── clientes/[clienteId]/
+│           ├── veiculos/[veiculoId]/
+│           ├── os/[osId]/
+│           └── pdv/[vendaId]/
+├── components/
+├── composables/
+├── layouts/
+└── utils/
 
 server/
 ├── api/
-│   ├── clientes/               # CRUD completo
-│   ├── veiculos/               # CRUD completo
-│   ├── catalogo/               # CRUD completo (sem [id].get)
-│   └── os/                     # (em desenvolvimento)
+│   └── unidade/
+│       └── [unidadeId]/
+│           ├── clientes/[clienteId].{get,put,delete}.ts
+│           ├── veiculos/[veiculoId].{get,put,delete}.ts
+│           ├── catalogo/[itemId].{put,delete}.ts
+│           ├── estoque/[catalogoId].{get,put}.ts
+│           ├── carteiras/[carteiraId].{get,put,delete}.ts
+│           ├── os/[osId]/
+│           └── pdv/[vendaId].get.ts
 └── utils/
-    ├── clientes.ts             # Schema Zod + types
-    ├── veiculos.ts             # Schema Zod + types
-    └── catalogo.ts             # Schema Zod + types
+
+docs/
+└── decisions/
 ```
+
+Os diretórios dinâmicos refletem os nomes semânticos dos parâmetros. Os segmentos da URL continuam iguais; apenas o nome interno usado por Nuxt/Nitro é específico.
 
 ---
 
@@ -81,16 +72,19 @@ server/
 
 | Rota | Página |
 |---|---|
-| `/clientes` | Listagem de clientes |
-| `/clientes/novo` | Novo cliente |
-| `/clientes/:id` | Detalhe do cliente |
-| `/clientes/:id/editar` | Editar cliente |
-| `/veiculos` | Listagem de veículos |
-| `/veiculos/novo` | Novo veículo |
-| `/veiculos/:id` | Detalhe do veículo |
-| `/veiculos/:id/editar` | Editar veículo |
-| `/catalogo` | Catálogo de itens (listagem + modal) |
-| `/os` | Ordens de serviço (em desenvolvimento) |
+| `/unidade/:unidadeId` | Dashboard da unidade |
+| `/unidade/:unidadeId/clientes` | Listagem de clientes |
+| `/unidade/:unidadeId/clientes/novo` | Novo cliente |
+| `/unidade/:unidadeId/clientes/:clienteId` | Perfil do cliente |
+| `/unidade/:unidadeId/clientes/:clienteId/editar` | Editar cliente |
+| `/unidade/:unidadeId/veiculos` | Listagem de veículos |
+| `/unidade/:unidadeId/veiculos/novo` | Novo veículo |
+| `/unidade/:unidadeId/veiculos/:veiculoId` | Perfil do veículo |
+| `/unidade/:unidadeId/veiculos/:veiculoId/editar` | Editar veículo |
+| `/unidade/:unidadeId/os/:osId` | Detalhe da OS |
+| `/unidade/:unidadeId/pdv/:vendaId` | Detalhe da venda |
+
+**Regra:** frontend usa `useRoute().params.<nomeSemantico>` e backend usa `getRouterParam(event, '<nomeSemantico>')`. Não usar regex ou análise manual de URL para recuperar parâmetros. Consulte `docs/CONVENTIONS.md` e `docs/decisions/015-parametros-semanticos-de-rotas.md`.
 
 ---
 
@@ -124,20 +118,20 @@ server/
 |---|---|---|
 | GET | `/api/clientes` | Lista clientes |
 | POST | `/api/clientes` | Cria cliente |
-| GET | `/api/clientes/:id` | Detalhe |
-| PUT | `/api/clientes/:id` | Atualiza |
-| DELETE | `/api/clientes/:id` | Exclui (bloqueia se houver veículos) |
+| GET | `/api/clientes/:clienteId` | Detalhe |
+| PUT | `/api/clientes/:clienteId` | Atualiza |
+| DELETE | `/api/clientes/:clienteId` | Exclui (bloqueia se houver veículos) |
 | GET | `/api/veiculos` | Lista veículos |
 | POST | `/api/veiculos` | Cria veículo |
-| GET | `/api/veiculos/:id` | Detalhe |
-| PUT | `/api/veiculos/:id` | Atualiza |
-| DELETE | `/api/veiculos/:id` | Exclui |
+| GET | `/api/veiculos/:veiculoId` | Detalhe |
+| PUT | `/api/veiculos/:veiculoId` | Atualiza |
+| DELETE | `/api/veiculos/:veiculoId` | Exclui |
 | GET | `/api/catalogo` | Lista itens |
 | POST | `/api/catalogo` | Cria item |
-| PUT | `/api/catalogo/:id` | Atualiza (preserva `tipo`) |
-| DELETE | `/api/catalogo/:id` | Exclui |
+| PUT | `/api/catalogo/:itemId` | Atualiza (preserva `tipo`) |
+| DELETE | `/api/catalogo/:itemId` | Exclui |
 
-> Catálogo **não** tem `GET /api/catalogo/:id` — o item já vem da listagem para o modal.
+> Catálogo **não** tem `GET /api/catalogo/:itemId` — o item já vem da listagem para o modal.
 
 ---
 

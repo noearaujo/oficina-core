@@ -3,7 +3,7 @@ import type { Config } from '~/types'
 /** Configuração da oficina (documentos impressos), carregada da API da unidade. */
 export function useConfig() {
   const route = useRoute()
-  const unidadeId = computed(() => route.path.match(/\/unidade\/([^/]+)/)?.[1] ?? String(route.params.id ?? ''))
+  const unidadeId = computed(() => String(route.params.unidadeId ?? ''))
 
   const config = useState<Config>('config', () => ({
     nome: 'Oficina',
