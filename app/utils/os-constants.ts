@@ -54,6 +54,8 @@ export const RESPONSAVEIS = [
   { label: 'Responsável padrão', value: 1 }
 ]
 
+export const COMBUSTIVEIS = ['E', '1/4', '2/4', '3/4', 'Cheio'].map(v => ({ label: v, value: v }))
+
 export const TIPO_NOTA: Record<string, { label: string, dot: string }> = {
   item_add: { label: 'Item adicionado', dot: 'bg-info' },
   item_edit: { label: 'Item editado', dot: 'bg-info' },
