@@ -9,6 +9,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   abrirAdicionarItem: []
+  abrirEditarItem: [item: ItemOSView]
   abrirEnviar: [complementos: boolean]
   abrirAjustar: []
   aprovarTodos: [subtotal: number]
@@ -64,7 +65,10 @@ function podeDecidir(item: ItemOSView) {
 }
 
 function podeEditar(item: ItemOSView) {
-  return item.status === 'pendente' && (props.statusAtual === 'em_diagnostico' || props.statusAtual === 'em_execucao')
+  if (item.status !== 'pendente') return false
+  if (!props.statusAtual || ['concluida', 'entregue', 'cancelada'].includes(props.statusAtual)) return false
+  if (props.statusAtual !== 'em_diagnostico' && item.enviado && props.statusAtual !== 'em_execucao') return false
+  return true
 }
 </script>
 
@@ -177,6 +181,16 @@ function podeEditar(item: ItemOSView) {
                   @click="emit('abrirRecusar', item)"
                 />
               </template>
+              <UButton
+                v-if="podeEditar(item) && !(item.enviado && statusAtual === 'aguardando_aprovacao')"
+                icon="i-lucide-pencil"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+                aria-label="Editar item"
+                :disabled="executando"
+                @click="emit('abrirEditarItem', item)"
+              />
               <UButton
                 v-if="podeEditar(item) && !(item.enviado && statusAtual === 'aguardando_aprovacao')"
                 icon="i-lucide-trash-2"

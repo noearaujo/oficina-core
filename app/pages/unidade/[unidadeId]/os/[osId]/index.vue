@@ -25,6 +25,8 @@ const documentos = computed(() => os.value ? montarDocumentosOS(os.value) : [])
 const executando = ref(false)
 const salvandoCampo = ref(false)
 const modalItem = ref(false)
+const modalEditarItem = ref(false)
+const itemEditando = ref<ItemOSView | undefined>()
 const modalEnviar = ref(false)
 const modalEditarResumo = ref(false)
 const enviandoComplementos = ref(false)
@@ -101,6 +103,14 @@ async function removerItem(item: ItemOSView) {
 
 async function adicionarItem(payload: Record<string, unknown>) {
   if (await executar(() => post('/itens', payload), 'Item adicionado')) modalItem.value = false
+}
+
+async function editarItem(payload: { nome: string, quantidade: number, precoUnitario: number }) {
+  const item = itemEditando.value
+  if (!item) return
+  if (await executar(() => $fetch(`${apiBase.value}/itens/${item.id}`, { method: 'PUT', body: payload }), 'Item atualizado')) {
+    modalEditarItem.value = false
+  }
 }
 
 async function salvarCampo(campo: 'queixa' | 'diagnostico' | 'avarias', valor: string, fechar: () => void) {
@@ -184,6 +194,7 @@ async function enviarOrcamento(canal: 'impressao' | 'imagem') {
             v-else-if="tab === 'orcamento'"
             v-bind="{ os, statusAtual, executando }"
             @abrir-adicionar-item="modalItem = true"
+            @abrir-editar-item="i => { itemEditando = i; modalEditarItem = true }"
             @abrir-enviar="c => { enviandoComplementos = c; modalEnviar = true }"
             @abrir-ajustar="motivoAtivo = { tipo: 'ajustar' }"
             @aprovar-todos="aprovarTodos"
@@ -198,6 +209,12 @@ async function enviarOrcamento(canal: 'impressao' | 'imagem') {
       </div>
 
       <OsModalAdicionarItem v-model:open="modalItem" v-bind="{ unidadeId, loading: executando, complemento: statusAtual === 'em_execucao' }" @confirm="adicionarItem" />
+      <OsModalEditarItem
+        v-model:open="modalEditarItem"
+        :item="itemEditando"
+        :loading="executando"
+        @confirm="editarItem"
+      />
       <OsModalEnviarOrcamento v-model:open="modalEnviar" v-bind="{ loading: executando, titulo: enviandoComplementos ? 'Enviar complementos' : 'Enviar orçamento' }" @confirm="enviarOrcamento" />
       <OsImpressao v-if="os" ref="impressaoRef" v-bind="{ os, config, documentos }" />
       <OsModalEditarResumo
