@@ -32,7 +32,7 @@ defineExpose({ fechar: cancelar })
 
 <template>
   <UPageCard :title="titulo" variant="subtle">
-    <template v-if="editavel && !editando" #links>
+    <div v-if="editavel && !editando" class="flex justify-end">
       <UButton
         icon="i-lucide-pencil"
         label="Editar"
@@ -41,10 +41,10 @@ defineExpose({ fechar: cancelar })
         size="sm"
         @click="iniciar"
       />
-    </template>
+    </div>
 
     <div v-if="editando" class="space-y-3">
-      <UTextarea v-model="rascunho" :rows="3" :placeholder="placeholder" />
+      <UTextarea v-model="rascunho" :rows="3" :placeholder="placeholder" class="w-full"/>
       <div class="flex justify-end gap-2">
         <UButton
           label="Cancelar"
