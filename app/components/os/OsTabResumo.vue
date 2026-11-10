@@ -8,7 +8,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  salvarCampo: [campo: 'queixa' | 'diagnostico' | 'avarias', valor: string, fechar: () => void]
+  'salvarCampo': [campo: 'queixa' | 'diagnostico' | 'avarias', valor: string, fechar: () => void]
+  'editar-resumo': []
 }>()
 
 const { RESPONSAVEIS, formatarData } = useOS()
@@ -33,6 +34,19 @@ function salvar(campo: 'queixa' | 'diagnostico' | 'avarias', valor: string, el: 
 <template>
   <div class="space-y-4">
     <UPageCard variant="subtle">
+      <template #title>
+        <div class="flex items-center justify-between w-full">
+          <span>Resumo</span>
+          <UButton
+            v-if="edicaoPermitida"
+            icon="i-lucide-pencil"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            @click="emit('editar-resumo')"
+          />
+        </div>
+      </template>
       <div class="flex flex-wrap items-center gap-3">
         <UAvatar icon="i-lucide-car" size="lg" />
         <div class="min-w-0 flex-1">

@@ -26,6 +26,7 @@ const executando = ref(false)
 const salvandoCampo = ref(false)
 const modalItem = ref(false)
 const modalEnviar = ref(false)
+const modalEditarResumo = ref(false)
 const enviandoComplementos = ref(false)
 const impressaoRef = ref<{ imprimir: () => void, abrirPreview: (key: string) => void } | null>(null)
 const motivoAtivo = ref<{ tipo: TipoMotivoOS, item?: ItemOSView } | null>(null)
@@ -109,6 +110,18 @@ async function salvarCampo(campo: 'queixa' | 'diagnostico' | 'avarias', valor: s
   if (ok) fechar()
 }
 
+async function salvarResumo(payload: { clienteId?: number, veiculoId?: number, funcionarioId: number, quilometragem?: string, combustivel?: string, previsaoEntrega?: string }) {
+  const body: Record<string, unknown> = { funcionarioId: payload.funcionarioId }
+  if (payload.clienteId) body.clienteId = payload.clienteId
+  if (payload.veiculoId) body.veiculoId = payload.veiculoId
+  if (payload.quilometragem) body.quilometragem = Number(payload.quilometragem)
+  if (payload.combustivel) body.combustivel = payload.combustivel
+  body.previsaoEntrega = payload.previsaoEntrega ? new Date(`${payload.previsaoEntrega}T00:00:00`).toISOString() : null
+  if (await executar(() => $fetch(apiBase.value, { method: 'PUT', body }), 'OS atualizada')) {
+    modalEditarResumo.value = false
+  }
+}
+
 async function enviarOrcamento(canal: 'impressao' | 'imagem') {
   const pendentes = (os.value?.itens ?? []).filter(i => typeof i.lote === 'number' && i.status === 'pendente' && !i.enviado)
   const body = { canal, ...(enviandoComplementos.value ? { itensIds: pendentes.map(i => i.id) } : {}) }
@@ -161,7 +174,12 @@ async function enviarOrcamento(canal: 'impressao' | 'imagem') {
             <UBadge v-if="os.tipo === 'garantia'" v-bind="{ label: 'Garantia', color: 'info', variant: 'subtle' }" />
           </div>
           <UTabs v-model="tab" v-bind="{ items: OS_TABS, variant: 'pill', content: false }" class="mb-4 sm:mb-6" />
-          <OsTabResumo v-if="tab === 'resumo'" v-bind="{ os, edicaoPermitida, salvandoCampo }" @salvar-campo="salvarCampo" />
+          <OsTabResumo
+            v-if="tab === 'resumo'"
+            v-bind="{ os, edicaoPermitida, salvandoCampo }"
+            @salvar-campo="salvarCampo"
+            @editar-resumo="modalEditarResumo = true"
+          />
           <OsTabOrcamento
             v-else-if="tab === 'orcamento'"
             v-bind="{ os, statusAtual, executando }"
@@ -182,6 +200,12 @@ async function enviarOrcamento(canal: 'impressao' | 'imagem') {
       <OsModalAdicionarItem v-model:open="modalItem" v-bind="{ unidadeId, loading: executando, complemento: statusAtual === 'em_execucao' }" @confirm="adicionarItem" />
       <OsModalEnviarOrcamento v-model:open="modalEnviar" v-bind="{ loading: executando, titulo: enviandoComplementos ? 'Enviar complementos' : 'Enviar orçamento' }" @confirm="enviarOrcamento" />
       <OsImpressao v-if="os" ref="impressaoRef" v-bind="{ os, config, documentos }" />
+      <OsModalEditarResumo
+        v-if="os"
+        v-model:open="modalEditarResumo"
+        v-bind="{ os, unidadeId, loading: executando }"
+        @confirm="salvarResumo"
+      />
       <OsModalMotivo v-model:open="modalMotivoAberto" v-bind="motivoProps" @confirm="confirmarMotivo" />
     </template>
   </UDashboardPanel>
