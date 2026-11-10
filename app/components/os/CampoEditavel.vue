@@ -44,7 +44,12 @@ defineExpose({ fechar: cancelar })
     </div>
 
     <div v-if="editando" class="space-y-3">
-      <UTextarea v-model="rascunho" :rows="3" :placeholder="placeholder" class="w-full"/>
+      <UTextarea
+        v-model="rascunho"
+        :rows="3"
+        :placeholder="placeholder"
+        class="w-full"
+      />
       <div class="flex justify-end gap-2">
         <UButton
           label="Cancelar"
