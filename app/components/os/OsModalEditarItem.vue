@@ -9,31 +9,30 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:open': [value: boolean]
-  'confirm': [payload: { nome: string, quantidade: number, precoUnitario: number }]
+  'confirm': [payload: { quantidade: number, precoUnitario?: number }]
 }>()
 
-const { parseCentavos, centavosParaInput } = useOS()
-const nome = ref('')
 const quantidade = ref('1')
 const preco = ref('0,00')
+const { parseCentavos, centavosParaInput } = useOS()
+
+const podeEditarPreco = computed(() => props.item?.tipo === 'servico')
 
 watch(() => props.open, (aberto) => {
   if (aberto && props.item) {
-    nome.value = props.item.nome
     quantidade.value = String(props.item.quantidade)
     preco.value = centavosParaInput(props.item.precoUnitario)
   }
 })
 
 const quantidadeNumero = computed(() => Number(quantidade.value.replace(',', '.')))
-const valido = computed(() => nome.value.trim().length > 0 && quantidadeNumero.value > 0)
+const valido = computed(() => quantidadeNumero.value > 0)
 
 function confirmar() {
   if (!valido.value) return
   emit('confirm', {
-    nome: nome.value.trim(),
     quantidade: quantidadeNumero.value,
-    precoUnitario: parseCentavos(preco.value)
+    ...(podeEditarPreco.value ? { precoUnitario: parseCentavos(preco.value) } : {})
   })
 }
 </script>
@@ -47,21 +46,23 @@ function confirmar() {
   >
     <template #body>
       <div class="space-y-4">
-        <UFormField label="Nome" required>
-          <UInput v-model="nome" placeholder="Nome do item" />
-        </UFormField>
-        <div class="grid grid-cols-2 gap-4">
-          <UFormField label="Quantidade" required>
-            <UInput v-model="quantidade" inputmode="decimal" />
-          </UFormField>
-          <UFormField label="Preço unitário" required>
-            <UInput v-model="preco" inputmode="decimal">
-              <template #leading>
-                <span class="text-xs text-muted">R$</span>
-              </template>
-            </UInput>
-          </UFormField>
+        <div v-if="item" class="text-sm text-muted">
+          {{ item.tipo === 'servico' ? 'Serviço' : 'Produto' }} · {{ item.unidade || 'un' }}
         </div>
+        <UFormField label="Quantidade" required>
+          <UInput v-model="quantidade" inputmode="decimal">
+            <template #trailing>
+              <span class="text-xs text-muted">{{ item?.unidade || 'un' }}</span>
+            </template>
+          </UInput>
+        </UFormField>
+        <UFormField v-if="podeEditarPreco" label="Preço unitário" required>
+          <UInput v-model="preco" inputmode="decimal">
+            <template #leading>
+              <span class="text-xs text-muted">R$</span>
+            </template>
+          </UInput>
+        </UFormField>
       </div>
     </template>
     <template #footer>

@@ -101,14 +101,18 @@ async function removerItem(item: ItemOSView) {
   if (window.confirm(`Remover "${item.nome}" da OS?`)) await executar(() => $fetch(`${apiBase.value}/itens/${item.id}`, { method: 'DELETE' }), 'Item removido')
 }
 
-async function adicionarItem(itens: { catalogoId: number, quantidade: number, precoUnitario?: number }[]) {
-  if (await executar(() => post('/itens/batch', { itens }), itens.length === 1 ? 'Item adicionado' : 'Itens adicionados')) modalItem.value = false
+async function adicionarItens(itens: { catalogoId: number, quantidade: number, precoUnitario?: number }[]) {
+  if (await executar(() => post('/itens/batch', { itens }), 'Itens adicionados')) {
+    modalItem.value = false
+  }
 }
 
-async function editarItem(payload: { nome: string, quantidade: number, precoUnitario: number }) {
+async function editarItem(payload: { quantidade: number, precoUnitario?: number }) {
   const item = itemEditando.value
   if (!item) return
-  if (await executar(() => $fetch(`${apiBase.value}/itens/${item.id}`, { method: 'PUT', body: payload }), 'Item atualizado')) {
+  const body: Record<string, unknown> = { quantidade: payload.quantidade }
+  if (payload.precoUnitario !== undefined) body.precoUnitario = payload.precoUnitario
+  if (await executar(() => $fetch(`${apiBase.value}/itens/${item.id}`, { method: 'PUT', body }), 'Item atualizado')) {
     modalEditarItem.value = false
   }
 }
@@ -208,7 +212,7 @@ async function enviarOrcamento(canal: 'impressao' | 'imagem') {
         </template>
       </div>
 
-      <OsModalAdicionarItem v-model:open="modalItem" v-bind="{ unidadeId, loading: executando, complemento: statusAtual === 'em_execucao' }" @confirm="adicionarItem" />
+      <OsModalAdicionarItem v-model:open="modalItem" v-bind="{ unidadeId, loading: executando, complemento: statusAtual === 'em_execucao' }" @confirm="adicionarItens" />
       <OsModalEditarItem
         v-model:open="modalEditarItem"
         :item="itemEditando"
