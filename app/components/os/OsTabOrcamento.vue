@@ -7,7 +7,7 @@ const props = defineProps<{
   executando?: boolean
 }>()
 
-watch(() => props.os.itens, (v) => console.log('itens:', v?.length), { deep: true })  
+watch(() => props.os.itens, v => console.log('itens:', v?.length), { deep: true })
 
 const emit = defineEmits<{
   abrirAdicionarItem: []

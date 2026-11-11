@@ -57,7 +57,7 @@ export async function carregarItensDaOS(unidadeId: number, os: OrdemServico): Pr
 
   if (Array.isArray(os.itens) && os.itens.length > 0) {
     return [...os.itens].sort((a, b) => a.id - b.id)
-  }   
+  }
 
   return []
 }
