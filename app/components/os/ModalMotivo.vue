@@ -39,7 +39,12 @@ function confirmar() {
     <template #body>
       <div class="space-y-4">
         <UFormField :label="label || 'Motivo'" :error="erro" required>
-          <UTextarea v-model="motivo" :rows="3" placeholder="Descreva o motivo" />
+          <UTextarea
+            v-model="motivo"
+            :rows="3"
+            placeholder="Descreva o motivo"
+            class="w-full"
+          />
         </UFormField>
         <UCheckbox
           v-if="confirmacao"

@@ -144,15 +144,15 @@ function podeEditar(item: ItemOSView) {
             class="flex flex-wrap items-center gap-3 py-3"
           >
             <div class="min-w-0 flex-1">
-              <p class="text-sm font-medium text-highlighted truncate">
+              <p class="flex items-center gap-1.5 text-sm font-medium text-highlighted truncate">
+                <UIcon :name="item.tipo === 'servico' ? 'i-lucide-wrench' : 'i-lucide-package'" class="size-3.5 shrink-0 text-muted" />
                 {{ item.nome }}
               </p>
-              <p class="text-xs text-muted">
-                {{ item.tipo === 'servico' ? 'Serviço' : 'Produto' }}
-                · {{ item.quantidade }}{{ item.unidade ? ` ${item.unidade}` : '' }}
+              <p class="text-xs text-muted pl-5">
+                {{ item.quantidade }}{{ item.unidade ? ` ${item.unidade}` : '' }}
                 × {{ formatarDinheiro(item.precoUnitario) }}
               </p>
-              <p v-if="item.status === 'recusado' && item.motivoRecusa" class="text-xs text-muted">
+              <p v-if="item.status === 'recusado' && item.motivoRecusa" class="text-xs text-muted pl-5">
                 Motivo: {{ item.motivoRecusa }}
               </p>
             </div>

@@ -89,6 +89,20 @@ const subtotal = computed(() =>
   lista.value.reduce((s, i) => s + Math.round(i.quantidade * i.preco), 0)
 )
 
+const searchTerm = ref('')
+
+const itemsVisiveis = computed(() => {
+  if (!searchTerm.value.trim()) {
+    return (catalogo.value ?? []).slice(0, 4)
+  }
+  const q = searchTerm.value.toLowerCase()
+  const qDigits = q.replace(/\D/g, '')
+  return (catalogo.value ?? []).filter(item =>
+    item.nome?.toLowerCase().includes(q)
+    || Boolean(qDigits && item.sku?.toLowerCase().includes(qDigits))
+  )
+})
+
 function confirmar() {
   if (lista.value.length === 0) return
   emit('confirm', lista.value.map(i => ({
@@ -110,22 +124,19 @@ function confirmar() {
         <UFormField label="Item do catálogo" required>
           <USelectMenu
             v-model="selecionado"
-            :items="catalogo ?? []"
+            v-model:search-term="searchTerm"
+            :items="itemsVisiveis"
+            ignore-filter
             label-key="nome"
             placeholder="Buscar por nome ou SKU..."
             icon="i-lucide-search"
-            :filter="(query: string, item: ItemCatalogoView) => {
-              const q = query.toLowerCase()
-              const qDigits = q.replace(/\D/g, '')
-              return (
-                item.nome?.toLowerCase().includes(q)
-                || Boolean(qDigits && item.sku?.toLowerCase().includes(qDigits))
-              )
-            }"
           >
             <template #item-label="{ item }">
               <div class="flex items-center justify-between w-full gap-2">
-                <span class="truncate">{{ item.nome }}</span>
+                <span class="flex items-center gap-1.5 truncate">
+                  <UIcon :name="item.tipo === 'servico' ? 'i-lucide-wrench' : 'i-lucide-package'" class="size-3.5 shrink-0 text-muted" />
+                  {{ item.nome }}
+                </span>
                 <span class="text-xs text-muted shrink-0">{{ (item.preco / 100).toFixed(2).replace('.', ',') }}</span>
               </div>
             </template>
@@ -169,6 +180,7 @@ function confirmar() {
           </p>
           <ul class="divide-y divide-default">
             <li v-for="(item, index) in lista" :key="item.catalogoId" class="flex items-center gap-2 py-2 text-sm">
+              <UIcon :name="item.tipo === 'servico' ? 'i-lucide-wrench' : 'i-lucide-package'" class="size-3.5 shrink-0 text-muted" />
               <span class="min-w-0 flex-1 truncate">{{ item.nome }}</span>
               <span class="text-xs text-muted shrink-0">{{ item.quantidade }} {{ item.unidade }}</span>
               <span class="text-xs tabular-nums shrink-0">{{ (Math.round(item.quantidade * item.preco) / 100).toFixed(2).replace('.', ',') }}</span>
