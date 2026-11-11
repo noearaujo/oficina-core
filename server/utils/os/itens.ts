@@ -1,3 +1,4 @@
+import type * as z from 'zod'
 import { db } from '../storage'
 import { baixarEstoqueItemOS } from '../estoque'
 import type { ItemCatalogo } from '../catalogo'
@@ -15,6 +16,7 @@ import {
 import { montarOSDetalhe } from './index'
 import {
   adicionarItemOsSchema,
+  adicionarItensOsSchema,
   editarItemOsSchema,
   recusarItemOsSchema,
   type AdicionarItemOSInput,
@@ -73,6 +75,75 @@ async function aprovarItemIndividual(
   })
 }
 
+function exigirStatusParaAdicionarItem(os: OrdemServico): void {
+  if (os.status !== 'em_diagnostico' && os.status !== 'em_execucao') {
+    erro(
+      400,
+      os.status === 'aguardando_aprovacao'
+        ? 'Use "Ajustar" para voltar ao diagnóstico antes de adicionar itens ao orçamento principal'
+        : `Não é possível adicionar itens quando a OS está com status "${os.status}"`
+    )
+  }
+}
+
+async function inserirOuSomarItemCatalogo(
+  unidadeId: number,
+  os: OrdemServico,
+  itensAtuais: ItemOS[],
+  itemInput: AdicionarItemOSInput
+): Promise<string> {
+  const catalogoItem = await db.get<ItemCatalogo>(unidadeId, 'catalogo', itemInput.catalogoId)
+  if (!catalogoItem || catalogoItem.deletedAt) {
+    erro(404, 'Item do catálogo não encontrado')
+  }
+
+  const nome = catalogoItem.nome
+  const tipo = catalogoItem.tipo
+  const unidade = catalogoItem.unidade
+  const precoUnitario = tipo === 'servico' && itemInput.precoUnitario !== undefined
+    ? Math.round(Number(itemInput.precoUnitario))
+    : Math.round(Number(catalogoItem.preco))
+
+  const quantidade = Number(itemInput.quantidade)
+  const lote: number | null = os.status === 'em_execucao'
+    ? calcularProximoLote(itensAtuais)
+    : null
+
+  // Mesmo item no mesmo lote e ainda pendente → soma a quantidade (não duplica linha)
+  const itemMesmoLotePendente = itensAtuais.find(
+    item =>
+      item.status === 'pendente'
+      && (item.lote ?? null) === lote
+      && item.catalogoId !== undefined
+      && Number(item.catalogoId) === Number(itemInput.catalogoId)
+  )
+
+  if (itemMesmoLotePendente) {
+    const novaQuantidade = Number((Number(itemMesmoLotePendente.quantidade) + quantidade).toFixed(3))
+    await db.update<ItemOS>(unidadeId, 'itensOS', itemMesmoLotePendente.id, {
+      quantidade: novaQuantidade
+    })
+    itemMesmoLotePendente.quantidade = novaQuantidade
+  } else {
+    const inserido = await db.insert<ItemOS>(unidadeId, 'itensOS', {
+      osId: os.id,
+      catalogoId: itemInput.catalogoId,
+      nome,
+      tipo,
+      unidade,
+      quantidade,
+      precoUnitario,
+      status: 'pendente',
+      lote,
+      enviado: false,
+      estoqueBaixado: false
+    })
+    itensAtuais.push(inserido)
+  }
+
+  return nome
+}
+
 export async function adicionarItem(
   unidadeId: number,
   osId: number,
@@ -83,82 +154,11 @@ export async function adicionarItem(
 
   return await db.transaction(async () => {
     const os = await obterOSExigente(unidadeId, osId)
+    exigirStatusParaAdicionarItem(os)
 
-    if (os.status !== 'em_diagnostico' && os.status !== 'em_execucao') {
-      erro(
-        400,
-        os.status === 'aguardando_aprovacao'
-          ? 'Use "Ajustar" para voltar ao diagnóstico antes de adicionar itens ao orçamento principal'
-          : `Não é possível adicionar itens quando a OS está com status "${os.status}"`
-      )
-    }
-
-    let catalogoItem: ItemCatalogo | null = null
-    if (dados.catalogoId !== undefined) {
-      catalogoItem = await db.get<ItemCatalogo>(unidadeId, 'catalogo', dados.catalogoId)
-    }
-
-    const nome = (dados.nome?.trim() || catalogoItem?.nome || '').trim()
-    if (!nome) {
-      erro(400, 'Informe o nome do item ou selecione um item válido do catálogo')
-    }
-
-    const tipo: 'servico' | 'produto' = catalogoItem?.tipo ?? dados.tipo ?? 'servico'
-    const unidade = (dados.unidade?.trim() || catalogoItem?.unidade || 'un').trim()
-    const precoUnitario = dados.precoUnitario !== undefined
-      ? Math.round(Number(dados.precoUnitario))
-      : catalogoItem
-        ? Math.round(Number(catalogoItem.preco))
-        : undefined
-
-    if (precoUnitario === undefined || !Number.isFinite(precoUnitario) || precoUnitario < 0) {
-      erro(400, 'Informe um preço unitário válido em centavos')
-    }
-
-    const quantidade = Number(dados.quantidade)
     const itensAtuais = await carregarItensDaOS(unidadeId, os)
-    const lote: number | null = os.status === 'em_execucao'
-      ? calcularProximoLote(itensAtuais)
-      : null
-
     const agora = new Date().toISOString()
-
-    // Mesmo item no mesmo lote e ainda pendente → soma a quantidade (não duplica linha)
-    const itemMesmoLotePendente = itensAtuais.find((item) => {
-      if (item.status !== 'pendente') return false
-      if ((item.lote ?? null) !== lote) return false
-
-      if (dados.catalogoId !== undefined) {
-        return item.catalogoId !== undefined && Number(item.catalogoId) === Number(dados.catalogoId)
-      }
-
-      return (
-        !item.catalogoId
-        && item.nome.trim().toLowerCase() === nome.toLowerCase()
-        && Math.round(Number(item.precoUnitario)) === precoUnitario
-      )
-    })
-
-    if (itemMesmoLotePendente) {
-      const novaQuantidade = Number((Number(itemMesmoLotePendente.quantidade) + quantidade).toFixed(3))
-      await db.update<ItemOS>(unidadeId, 'itensOS', itemMesmoLotePendente.id, {
-        quantidade: novaQuantidade
-      })
-    } else {
-      await db.insert<ItemOS>(unidadeId, 'itensOS', {
-        osId: os.id,
-        ...(dados.catalogoId !== undefined ? { catalogoId: dados.catalogoId } : {}),
-        nome,
-        tipo,
-        unidade,
-        quantidade,
-        precoUnitario,
-        status: 'pendente',
-        lote,
-        enviado: false,
-        estoqueBaixado: false
-      })
-    }
+    const nome = await inserirOuSomarItemCatalogo(unidadeId, os, itensAtuais, dados)
 
     // Adicionar complemento em em_execucao gera Nota; em em_diagnostico NÃO gera nota (§4.9)
     if (os.status === 'em_execucao') {
@@ -166,6 +166,45 @@ export async function adicionarItem(
         osId: os.id,
         tipo: 'item_add',
         texto: `Complemento adicionado: ${nome}`,
+        role,
+        data: agora
+      })
+    }
+
+    const atualizada = await sincronizarSnapshotOS(unidadeId, os.id, { dataAtualizacao: agora })
+    return await montarOSDetalhe(unidadeId, atualizada)
+  })
+}
+
+export async function adicionarItens(
+  unidadeId: number,
+  osId: number,
+  dadosInput: z.input<typeof adicionarItensOsSchema>
+): Promise<OrdemServicoDetalhe> {
+  const dados = adicionarItensOsSchema.parse(dadosInput)
+  const role = exigirRole(dados.role, ROLES_VALIDOS, 'adicionar item')
+
+  return await db.transaction(async () => {
+    const os = await obterOSExigente(unidadeId, osId)
+    exigirStatusParaAdicionarItem(os)
+
+    const itensAtuais = await carregarItensDaOS(unidadeId, os)
+    const agora = new Date().toISOString()
+    const nomes: string[] = []
+
+    for (const itemInput of dados.itens) {
+      const nome = await inserirOuSomarItemCatalogo(unidadeId, os, itensAtuais, itemInput)
+      if (!nomes.includes(nome)) {
+        nomes.push(nome)
+      }
+    }
+
+    // Adicionar complemento em em_execucao gera Nota; em em_diagnostico NÃO gera nota (§4.9)
+    if (os.status === 'em_execucao') {
+      await gerarNota(unidadeId, {
+        osId: os.id,
+        tipo: 'item_add',
+        texto: `Complementos adicionados: ${nomes.join(', ')}`,
         role,
         data: agora
       })
@@ -210,18 +249,15 @@ export async function editarItem(
       erro(400, 'Este item não pode ser editado no status atual da OS')
     }
 
-    const novoNome = dados.nome !== undefined ? dados.nome.trim() : item.nome
-    const novaUnidade = dados.unidade !== undefined ? dados.unidade.trim() : item.unidade
+    if (dados.precoUnitario !== undefined && item.tipo !== 'servico') {
+      erro(400, 'Preço de produto não pode ser editado na OS')
+    }
+
     const novaQuantidade = dados.quantidade !== undefined ? Number(dados.quantidade) : Number(item.quantidade)
-    const novoPreco = dados.precoUnitario !== undefined
-      ? Math.round(Number(dados.precoUnitario))
-      : Math.round(Number(item.precoUnitario))
 
     await db.update<ItemOS>(unidadeId, 'itensOS', item.id, {
-      nome: novoNome,
-      ...(novaUnidade ? { unidade: novaUnidade } : {}),
       quantidade: novaQuantidade,
-      precoUnitario: novoPreco
+      ...(dados.precoUnitario !== undefined ? { precoUnitario: Math.round(Number(dados.precoUnitario)) } : {})
     })
 
     const agora = new Date().toISOString()
@@ -231,7 +267,7 @@ export async function editarItem(
       await gerarNota(unidadeId, {
         osId: os.id,
         tipo: 'item_edit',
-        texto: `Item editado: ${novoNome}`,
+        texto: `Item editado: ${item.nome}`,
         role,
         data: agora
       })

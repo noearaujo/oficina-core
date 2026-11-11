@@ -102,61 +102,37 @@ export const transicionarOsSchema = z.object({
 })
 
 export const adicionarItemOsSchema = z.object({
-  catalogoId: z.preprocess(
-    vazioParaUndefined,
-    z.coerce.number().int().positive().optional()
-  ),
-  nome: z.string().trim().optional(),
-  tipo: z.enum(['servico', 'produto']).optional(),
-  unidade: z.string().trim().optional(),
+  catalogoId: z.coerce.number().int().positive('Selecione um item do catálogo'),
   quantidade: z.preprocess(
     value => (value === '' || value === null || value === undefined ? 1 : value),
     z.coerce.number({ message: 'Informe a quantidade' }).positive('A quantidade deve ser maior que zero')
   ),
   precoUnitario: z.preprocess(
     vazioParaUndefined,
-    z.coerce.number({ message: 'Informe o preço unitário' })
-      .int('Preço unitário deve ser inteiro em centavos')
-      .min(0, 'Preço unitário não pode ser negativo')
-      .optional()
+    z.coerce.number().int('Preço deve ser inteiro em centavos').min(0, 'Preço não pode ser negativo').optional()
   ),
   role: z.string().trim().optional(),
   usuarioId: z.preprocess(vazioParaUndefined, z.coerce.number().int().positive().optional())
-}).transform(d => ({
-  catalogoId: d.catalogoId,
-  nome: d.nome,
-  tipo: d.tipo,
-  unidade: d.unidade,
-  quantidade: Number(d.quantidade),
-  precoUnitario: d.precoUnitario,
-  role: d.role,
-  usuarioId: d.usuarioId
-}))
+})
+
+export const adicionarItensOsSchema = z.object({
+  itens: z.array(adicionarItemOsSchema).min(1, 'Adicione ao menos um item'),
+  role: z.string().trim().optional(),
+  usuarioId: z.preprocess(vazioParaUndefined, z.coerce.number().int().positive().optional())
+})
 
 export const editarItemOsSchema = z.object({
-  nome: z.string().trim().min(1, 'Informe o nome do item').optional(),
-  unidade: z.string().trim().min(1, 'Informe a unidade').optional(),
   quantidade: z.preprocess(
     vazioParaUndefined,
     z.coerce.number().positive('A quantidade deve ser maior que zero').optional()
   ),
   precoUnitario: z.preprocess(
     vazioParaUndefined,
-    z.coerce.number()
-      .int('Preço unitário deve ser inteiro em centavos')
-      .min(0, 'Preço unitário não pode ser negativo')
-      .optional()
+    z.coerce.number().int('Preço deve ser inteiro em centavos').min(0, 'Preço não pode ser negativo').optional()
   ),
   role: z.string().trim().optional(),
   usuarioId: z.preprocess(vazioParaUndefined, z.coerce.number().int().positive().optional())
-}).transform(d => ({
-  nome: d.nome,
-  unidade: d.unidade,
-  quantidade: d.quantidade,
-  precoUnitario: d.precoUnitario,
-  role: d.role,
-  usuarioId: d.usuarioId
-}))
+})
 
 export const recusarItemOsSchema = z.object({
   motivo: z.string({ message: 'Informe o motivo da recusa' }).trim().min(1, 'Informe o motivo da recusa'),
@@ -197,6 +173,7 @@ export type CriarOSInput = z.output<typeof criarOsSchema>
 export type EditarOSInput = z.output<typeof editarOsSchema>
 export type TransicionarOSInput = z.output<typeof transicionarOsSchema>
 export type AdicionarItemOSInput = z.output<typeof adicionarItemOsSchema>
+export type AdicionarItensOSInput = z.output<typeof adicionarItensOsSchema>
 export type EditarItemOSInput = z.output<typeof editarItemOsSchema>
 export type RecusarItemOSInput = z.output<typeof recusarItemOsSchema>
 export type AjustarOSInput = z.output<typeof ajustarOsSchema>
