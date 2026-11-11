@@ -45,13 +45,19 @@ export async function carregarItensDaOS(unidadeId: number, os: OrdemServico): Pr
     item => Number(item.osId) === os.id
   )
 
+  // Se a OS já foi sincronizada (tem dataAtualizacao), a coleção é a fonte de verdade
+  if (os.dataAtualizacao) {
+    return [...daColecao].sort((a, b) => a.id - b.id)
+  }
+
+  // Fallback só pra dados antigos (nunca sincronizados)
   if (daColecao.length > 0) {
     return [...daColecao].sort((a, b) => a.id - b.id)
   }
 
   if (Array.isArray(os.itens) && os.itens.length > 0) {
     return [...os.itens].sort((a, b) => a.id - b.id)
-  }
+  }   
 
   return []
 }
