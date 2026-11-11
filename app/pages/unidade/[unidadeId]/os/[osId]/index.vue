@@ -101,8 +101,8 @@ async function removerItem(item: ItemOSView) {
   if (window.confirm(`Remover "${item.nome}" da OS?`)) await executar(() => $fetch(`${apiBase.value}/itens/${item.id}`, { method: 'DELETE' }), 'Item removido')
 }
 
-async function adicionarItem(payload: Record<string, unknown>) {
-  if (await executar(() => post('/itens', payload), 'Item adicionado')) modalItem.value = false
+async function adicionarItem(itens: { catalogoId: number, quantidade: number, precoUnitario?: number }[]) {
+  if (await executar(() => post('/itens/batch', { itens }), itens.length === 1 ? 'Item adicionado' : 'Itens adicionados')) modalItem.value = false
 }
 
 async function editarItem(payload: { nome: string, quantidade: number, precoUnitario: number }) {

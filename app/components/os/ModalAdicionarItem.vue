@@ -1,13 +1,20 @@
 <script setup lang="ts">
-import { refDebounced } from '@vueuse/core'
-
-interface ItemBusca {
-  id?: number
+interface ItemCatalogoView {
+  id: number
   nome: string
   tipo: 'servico' | 'produto'
   sku?: string
-  unidade?: string
+  unidade: string
   preco: number
+}
+
+interface ItemNaLista {
+  catalogoId: number
+  nome: string
+  unidade: string
+  tipo: 'servico' | 'produto'
+  preco: number
+  quantidade: number
 }
 
 const props = defineProps<{
@@ -17,52 +24,30 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  confirm: [item: {
-    catalogoId?: number
-    nome: string
-    tipo: 'servico' | 'produto'
-    unidade?: string
-    quantidade: number
-    precoUnitario: number
-  }]
+  confirm: [itens: { catalogoId: number, quantidade: number, precoUnitario?: number }[]]
 }>()
+
 const open = defineModel<boolean>('open', { default: false })
 
-const { parseCentavos, centavosParaInput, formatarDinheiro } = useOS()
+const { data: catalogo } = await useFetch<ItemCatalogoView[]>(
+  () => `/api/unidade/${props.unidadeId}/catalogo`,
+  { default: () => [] }
+)
 
-const termo = ref('')
-const termoDebounced = refDebounced(termo, 300)
-const selecionado = ref<ItemBusca | undefined>()
+const selecionado = ref<ItemCatalogoView | undefined>()
 const quantidade = ref('1')
 const preco = ref('0,00')
-const resultados = ref<ItemBusca[]>([])
-const buscando = ref(false)
+const lista = ref<ItemNaLista[]>([])
+const { parseCentavos, centavosParaInput } = useOS()
 
-watch(open, (aberto) => {
+const podeEditarPreco = computed(() => selecionado.value?.tipo === 'servico')
+
+watch(() => open.value, (aberto) => {
   if (aberto) {
-    termo.value = ''
     selecionado.value = undefined
     quantidade.value = '1'
     preco.value = '0,00'
-    resultados.value = []
-  }
-})
-
-watch(termoDebounced, async (q) => {
-  const busca = q.trim()
-  if (!open.value || busca.length < 1 || selecionado.value?.nome === busca) {
-    if (!busca) resultados.value = []
-    return
-  }
-  buscando.value = true
-  try {
-    resultados.value = await $fetch<ItemBusca[]>(`/api/unidade/${props.unidadeId}/catalogo`, {
-      query: { q: busca }
-    })
-  } catch {
-    resultados.value = []
-  } finally {
-    buscando.value = false
+    lista.value = []
   }
 })
 
@@ -71,86 +56,150 @@ watch(selecionado, (item) => {
 })
 
 const quantidadeNumero = computed(() => Number(quantidade.value.replace(',', '.')))
-const valido = computed(() =>
-  Boolean(selecionado.value) && quantidadeNumero.value > 0
-)
+const podeAdicionar = computed(() => Boolean(selecionado.value) && quantidadeNumero.value > 0)
 
-function criarLivre(nome: string) {
-  selecionado.value = { nome, tipo: 'servico', preco: 0 }
-  resultados.value = []
+function adicionarALista() {
+  const item = selecionado.value
+  if (!podeAdicionar.value || !item) return
+
+  const existente = lista.value.find(l => l.catalogoId === item.id)
+  if (existente) {
+    existente.quantidade += quantidadeNumero.value
+  } else {
+    lista.value.push({
+      catalogoId: item.id,
+      nome: item.nome,
+      unidade: item.unidade,
+      tipo: item.tipo,
+      preco: podeEditarPreco.value ? parseCentavos(preco.value) : item.preco,
+      quantidade: quantidadeNumero.value
+    })
+  }
+
+  selecionado.value = undefined
+  quantidade.value = '1'
+  preco.value = '0,00'
 }
 
+function removerDaLista(index: number) {
+  lista.value.splice(index, 1)
+}
+
+const subtotal = computed(() =>
+  lista.value.reduce((s, i) => s + Math.round(i.quantidade * i.preco), 0)
+)
+
 function confirmar() {
-  const item = selecionado.value
-  if (!item || !valido.value) return
-  emit('confirm', {
-    catalogoId: item.id,
-    nome: item.nome,
-    tipo: item.tipo,
-    unidade: item.unidade,
-    quantidade: quantidadeNumero.value,
-    precoUnitario: parseCentavos(preco.value)
-  })
+  if (lista.value.length === 0) return
+  emit('confirm', lista.value.map(i => ({
+    catalogoId: i.catalogoId,
+    quantidade: i.quantidade,
+    ...(i.tipo === 'servico' ? { precoUnitario: i.preco } : {})
+  })))
 }
 </script>
 
 <template>
   <UModal
     v-model:open="open"
-    :title="complemento ? 'Adicionar complemento' : 'Adicionar item'"
-    description="Busque no catálogo por nome ou SKU."
+    :title="complemento ? 'Adicionar complementos' : 'Adicionar itens'"
+    description="Busque no catálogo e adicione à lista."
   >
     <template #body>
       <div class="space-y-4">
         <UFormField label="Item do catálogo" required>
-          <UInputMenu
+          <USelectMenu
             v-model="selecionado"
-            v-model:search-term="termo"
-            :items="resultados"
-            :loading="buscando"
+            :items="catalogo ?? []"
             label-key="nome"
-            ignore-filter
-            :create-item="{ when: 'empty' }"
+            placeholder="Buscar por nome ou SKU..."
             icon="i-lucide-search"
-            placeholder="Buscar item..."
-            @create="criarLivre"
+            :filter="(query: string, item: ItemCatalogoView) => {
+              const q = query.toLowerCase()
+              const qDigits = q.replace(/\D/g, '')
+              return (
+                item.nome?.toLowerCase().includes(q)
+                || Boolean(qDigits && item.sku?.toLowerCase().includes(qDigits))
+              )
+            }"
           >
             <template #item-label="{ item }">
-              {{ item.nome }}
-              <span v-if="item.sku" class="text-xs text-muted"> · {{ item.sku }}</span>
+              <div class="flex items-center justify-between w-full gap-2">
+                <span class="truncate">{{ item.nome }}</span>
+                <span class="text-xs text-muted shrink-0">{{ (item.preco / 100).toFixed(2).replace('.', ',') }}</span>
+              </div>
             </template>
-            <template #item-trailing="{ item }">
-              <span class="text-xs text-muted">{{ formatarDinheiro(item.preco) }}</span>
-            </template>
-          </UInputMenu>
+          </USelectMenu>
         </UFormField>
 
-        <div class="grid grid-cols-2 gap-4">
-          <UFormField label="Quantidade" required>
-            <UInput v-model="quantidade" inputmode="decimal" />
+        <div class="flex items-end gap-3">
+          <UFormField
+            v-if="selecionado"
+            label="Quantidade"
+            required
+            class="flex-1"
+          >
+            <UInput v-model="quantidade" inputmode="decimal">
+              <template #trailing>
+                <span class="text-xs text-muted">{{ selecionado.unidade }}</span>
+              </template>
+            </UInput>
           </UFormField>
-          <UFormField label="Preço unitário" required>
+          <UFormField v-if="selecionado && podeEditarPreco" label="Preço" class="w-32">
             <UInput v-model="preco" inputmode="decimal">
               <template #leading>
                 <span class="text-xs text-muted">R$</span>
               </template>
             </UInput>
           </UFormField>
+          <UButton
+            label="Adicionar"
+            icon="i-lucide-plus"
+            size="sm"
+            color="neutral"
+            variant="outline"
+            :disabled="!podeAdicionar"
+            @click="adicionarALista"
+          />
+        </div>
+
+        <div v-if="lista.length" class="border-t border-default pt-4">
+          <p class="mb-2 text-xs font-medium text-muted">
+            {{ lista.length }} item(ns) na lista
+          </p>
+          <ul class="divide-y divide-default">
+            <li v-for="(item, index) in lista" :key="item.catalogoId" class="flex items-center gap-2 py-2 text-sm">
+              <span class="min-w-0 flex-1 truncate">{{ item.nome }}</span>
+              <span class="text-xs text-muted shrink-0">{{ item.quantidade }} {{ item.unidade }}</span>
+              <span class="text-xs tabular-nums shrink-0">{{ (Math.round(item.quantidade * item.preco) / 100).toFixed(2).replace('.', ',') }}</span>
+              <UButton
+                icon="i-lucide-x"
+                variant="ghost"
+                size="xs"
+                color="error"
+                @click="removerDaLista(index)"
+              />
+            </li>
+          </ul>
+          <p class="mt-2 text-right text-sm font-medium tabular-nums">
+            Subtotal: {{ (subtotal / 100).toFixed(2).replace('.', ',') }}
+          </p>
         </div>
       </div>
     </template>
     <template #footer>
       <div class="flex w-full justify-end gap-2">
         <UButton
-          label="Voltar"
+          label="Cancelar"
           color="neutral"
           variant="outline"
           @click="open = false"
         />
         <UButton
-          label="Adicionar"
+          label="Salvar"
+          icon="i-lucide-check"
           :loading="loading"
-          :disabled="!valido"
+          :disabled="!lista.length"
           @click="confirmar"
         />
       </div>
