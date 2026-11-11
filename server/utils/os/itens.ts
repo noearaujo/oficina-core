@@ -76,7 +76,7 @@ async function aprovarItemIndividual(
 }
 
 function exigirStatusParaAdicionarItem(os: OrdemServico): void {
-  if (os.status !== 'em_diagnostico' && os.status !== 'em_execucao') {
+  if (os.status !== 'aberta' && os.status !== 'em_diagnostico' && os.status !== 'em_execucao') {
     erro(
       400,
       os.status === 'aguardando_aprovacao'

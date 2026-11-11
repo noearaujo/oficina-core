@@ -79,6 +79,7 @@ export const TRANSICOES: Partial<Record<StatusOS, { acao: string, label: string,
 }
 
 export const STATUS_COM_IMPRESSAO: StatusOS[] = [
+  'aberta',
   'aguardando_aprovacao',
   'aprovada',
   'em_execucao',

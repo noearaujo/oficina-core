@@ -7,6 +7,8 @@ const props = defineProps<{
   executando?: boolean
 }>()
 
+watch(() => props.os.itens, (v) => console.log('itens:', v?.length), { deep: true })  
+
 const emit = defineEmits<{
   abrirAdicionarItem: []
   abrirEditarItem: [item: ItemOSView]
@@ -77,7 +79,7 @@ function podeEditar(item: ItemOSView) {
     <DashboardSectionHeader title="Orçamento" description="Itens, complementos e totais.">
       <div class="flex flex-wrap justify-end gap-2">
         <UButton
-          v-if="statusAtual === 'em_diagnostico' || statusAtual === 'em_execucao'"
+          v-if="statusAtual === 'aberta' || statusAtual === 'em_diagnostico' || statusAtual === 'em_execucao'"
           :label="statusAtual === 'em_execucao' ? 'Adicionar complemento' : 'Adicionar item'"
           icon="i-lucide-plus"
           @click="emit('abrirAdicionarItem')"
