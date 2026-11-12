@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { FaturamentoView, LancamentoView } from '~/composables/useOS'
+import type { FaturamentoView } from '~/composables/useOS'
 
 defineProps<{
   faturamento: FaturamentoView
@@ -7,7 +7,6 @@ defineProps<{
 
 const emit = defineEmits<{
   lancarPagamento: []
-  estornar: [lancamento: LancamentoView]
   devolver: []
 }>()
 
@@ -71,23 +70,8 @@ const { PAGAMENTO_META, formatarDinheiro, formatarData } = useOS()
             :color="l.tipo === 'entrada' ? 'success' : 'error'"
             variant="subtle"
           />
-          <UBadge
-            v-if="l.estornoDe"
-            label="Estornado"
-            color="neutral"
-            variant="subtle"
-          />
           <span class="flex-1 capitalize">{{ l.modalidade }} · {{ l.categoria }}</span>
           <span class="font-medium tabular-nums">{{ formatarDinheiro(l.valor) }}</span>
-          <UButton
-            v-if="l.tipo === 'entrada' && l.categoria === 'pagamento' && !l.estornoDe && !faturamento.lancamentos.some(e => e.estornoDe === l.id)"
-            icon="i-lucide-undo-2"
-            variant="ghost"
-            size="xs"
-            color="error"
-            aria-label="Estornar pagamento"
-            @click="emit('estornar', l)"
-          />
         </li>
       </ul>
     </UPageCard>

@@ -32,13 +32,6 @@ export const pagamentoOsSchema = z.object({
   message: 'Informe exatamente um destino: Carteira ou Sessão de Caixa'
 })
 
-export const estornoPagamentoOsSchema = z.object({
-  lancamentoId: z.coerce.number().int().positive(),
-  motivo: z.string().trim().min(1, 'Informe o motivo do estorno'),
-  role: z.string().trim().optional(),
-  usuarioId: z.preprocess(vazioParaUndefined, z.coerce.number().int().positive().optional())
-})
-
 export const devolucaoOsSchema = z.object({
   valor: z.coerce.number().int().positive('Valor deve ser positivo em centavos'),
   modalidade: z.enum(['dinheiro', 'pix', 'credito', 'debito', 'boleto']),
@@ -52,7 +45,6 @@ export const devolucaoOsSchema = z.object({
 })
 
 export type PagamentoOSInput = z.output<typeof pagamentoOsSchema>
-export type EstornoPagamentoOSInput = z.output<typeof estornoPagamentoOsSchema>
 export type DevolucaoOSInput = z.output<typeof devolucaoOsSchema>
 
 async function validarDestinoOS(
@@ -197,71 +189,6 @@ export async function lancarPagamentoOS(
       osId: os.id,
       tipo: 'pagamento',
       texto: `Pagamento ${formatarMoedaNota(dados.valor)} (${dados.modalidade})`,
-      role,
-      data: agora
-    })
-
-    const atualizada = await sincronizarSnapshotOS(unidadeId, os.id, {
-      dataAtualizacao: agora
-    })
-
-    return await montarOSDetalhe(unidadeId, atualizada)
-  })
-}
-
-export async function estornarPagamentoOS(
-  unidadeId: number,
-  osId: number,
-  dadosInput: EstornoPagamentoOSInput
-): Promise<OrdemServicoDetalhe> {
-  const dados = estornoPagamentoOsSchema.parse(dadosInput)
-  const role = exigirRole(dados.role, ['owner', 'admin', 'gerente'], 'estornar pagamento')
-  const usuarioId = dados.usuarioId || 1
-
-  return await db.transaction(async () => {
-    const os = await obterOSExigente(unidadeId, osId)
-    const lancamentos = await db.list<LancamentoCaixa>(unidadeId, 'lancamentos')
-    const original = lancamentos.find(l => l.id === dados.lancamentoId)
-
-    if (!original) {
-      erro(404, 'Lançamento não encontrado')
-    }
-
-    if (Number(original.documentoId) !== os.id || original.documentoTipo !== 'os') {
-      erro(400, 'Lançamento não pertence a esta OS')
-    }
-
-    if (original.categoria !== 'pagamento' || original.tipo !== 'entrada') {
-      erro(400, 'Apenas lançamentos de pagamento podem ser estornados')
-    }
-
-    if (original.estornoDe || lancamentos.some(e => Number(e.estornoDe) === original.id)) {
-      erro(400, 'Lançamento já estornado')
-    }
-
-    const agora = new Date().toISOString()
-    const valor = Math.round(Number(original.valor))
-
-    await db.insert<LancamentoCaixa>(unidadeId, 'lancamentos', {
-      tipo: 'saida',
-      documentoTipo: 'os',
-      documentoId: os.id,
-      estornoDe: original.id,
-      modalidade: original.modalidade,
-      ...(original.carteiraId ? { carteiraId: original.carteiraId } : {}),
-      ...(original.sessaoCaixaId ? { sessaoCaixaId: original.sessaoCaixaId } : {}),
-      categoria: 'pagamento',
-      valor,
-      data: agora,
-      observacao: dados.motivo,
-      criadoPorUsuarioId: usuarioId,
-      dataCriacao: agora
-    })
-
-    await gerarNota(unidadeId, {
-      osId: os.id,
-      tipo: 'pagamento',
-      texto: `Estorno ${formatarMoedaNota(valor)}`,
       role,
       data: agora
     })

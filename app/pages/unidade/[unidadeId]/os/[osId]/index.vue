@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ItemOSView, LancamentoView, OSView, StatusOS } from '~/composables/useOS'
+import type { ItemOSView, OSView, StatusOS } from '~/composables/useOS'
 import { MOTIVO_OS_META, OS_TABS, STATUS_CANCELAVEIS, TRANSICOES, montarDocumentosOS, type TipoMotivoOS } from '~/utils/os-constants'
 
 const route = useRoute()
@@ -34,8 +34,6 @@ const impressaoRef = ref<{ imprimir: () => void, abrirPreview: (key: string) => 
 const motivoAtivo = ref<{ tipo: TipoMotivoOS, item?: ItemOSView } | null>(null)
 const modalPagamento = ref(false)
 const modalDevolver = ref(false)
-const lancamentoEstornando = ref<LancamentoView | undefined>()
-const modalEstornar = ref(false)
 
 const modalMotivoAberto = computed({
   get: () => motivoAtivo.value !== null,
@@ -154,12 +152,6 @@ async function lancarPagamento(payload: { valor: number, modalidade: string, car
   if (await executar(() => post('/pagamento', payload), 'Pagamento registrado')) modalPagamento.value = false
 }
 
-async function estornarPagamento(motivo: string) {
-  const l = lancamentoEstornando.value
-  if (!l) return
-  if (await executar(() => post(`/pagamento/${l.id}/estorno`, { motivo }), 'Pagamento estornado')) modalEstornar.value = false
-}
-
 async function devolver(payload: { valor: number, modalidade: string, carteiraId?: number, sessaoCaixaId?: number, motivo: string }) {
   if (await executar(() => post('/devolucao', payload), 'Devolução registrada')) modalDevolver.value = false
 }
@@ -229,7 +221,6 @@ async function devolver(payload: { valor: number, modalidade: string, carteiraId
             v-else
             :faturamento="os.faturamento"
             @lancar-pagamento="modalPagamento = true"
-            @estornar="l => { lancamentoEstornando = l; modalEstornar = true }"
             @devolver="modalDevolver = true"
           />
           <OsHistorico :notas="os.notas" />
@@ -267,16 +258,6 @@ async function devolver(payload: { valor: number, modalidade: string, carteiraId
         :pago="os.faturamento.pago"
         :loading="executando"
         @confirm="devolver"
-      />
-      <OsModalMotivo
-        v-model:open="modalEstornar"
-        title="Estornar pagamento"
-        description="O lançamento será neutralizado no extrato."
-        label="Motivo do estorno"
-        confirm-label="Estornar"
-        color="error"
-        :loading="executando"
-        @confirm="estornarPagamento"
       />
     </template>
   </UDashboardPanel>

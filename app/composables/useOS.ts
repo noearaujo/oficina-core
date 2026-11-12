@@ -48,7 +48,6 @@ export interface LancamentoView {
   data: string
   modalidade: string
   categoria: string
-  estornoDe?: number
 }
 
 export interface FaturamentoView {
