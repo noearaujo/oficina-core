@@ -73,7 +73,7 @@ watch(() => props.open, (aberto) => {
   state.funcionarioId = props.os.funcionarioId
   state.quilometragem = props.os.quilometragem !== undefined ? String(props.os.quilometragem) : ''
   state.combustivel = props.os.combustivel
-  state.previsaoEntrega = props.os.previsaoEntrega ? props.os.previsaoEntrega.slice(0, 16) : ''
+  state.previsaoEntrega = toLocalDateTime(props.os.previsaoEntrega)
   nextTick(() => {
     inicializando.value = false
   })
@@ -95,6 +95,15 @@ const schema = z.object({
   combustivel: z.string().optional(),
   previsaoEntrega: z.string().optional()
 })
+
+// Converte UTC (retornado pela API) para o fuso local do navegador,
+// pois datetime-local não aceita sufixo de timezone.
+function toLocalDateTime(value: string | undefined): string {
+  if (!value) return ''
+  const d = new Date(value)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
 
 async function onSubmit(event: FormSubmitEvent<z.output<typeof schema>>) {
   if (!clienteId.value || !veiculoId.value) return
