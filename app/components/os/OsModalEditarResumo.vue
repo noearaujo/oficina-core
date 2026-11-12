@@ -73,7 +73,7 @@ watch(() => props.open, (aberto) => {
   state.funcionarioId = props.os.funcionarioId
   state.quilometragem = props.os.quilometragem !== undefined ? String(props.os.quilometragem) : ''
   state.combustivel = props.os.combustivel
-  state.previsaoEntrega = props.os.previsaoEntrega ? props.os.previsaoEntrega.slice(0, 10) : ''
+  state.previsaoEntrega = props.os.previsaoEntrega ? props.os.previsaoEntrega.slice(0, 16) : ''
   nextTick(() => {
     inicializando.value = false
   })
@@ -154,7 +154,7 @@ async function onSubmit(event: FormSubmitEvent<z.output<typeof schema>>) {
             <USelect v-model="state.combustivel" :items="COMBUSTIVEIS" placeholder="Nível" />
           </UFormField>
           <UFormField label="Previsão de entrega" name="previsaoEntrega">
-            <UInput v-model="state.previsaoEntrega" type="date" />
+            <UInput v-model="state.previsaoEntrega" type="datetime-local" />
           </UFormField>
         </div>
       </UForm>

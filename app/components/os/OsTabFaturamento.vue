@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { FaturamentoView } from '~/composables/useOS'
 
-defineProps<{
+const props = defineProps<{
   faturamento: FaturamentoView
 }>()
 
@@ -10,7 +10,11 @@ const emit = defineEmits<{
   devolver: []
 }>()
 
-const { PAGAMENTO_META, formatarDinheiro, formatarData } = useOS()
+const { PAGAMENTO_META, formatarDinheiro, formatarDataHora } = useOS()
+
+const lancamentosOrdenados = computed(() =>
+  [...props.faturamento.lancamentos].sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
+)
 </script>
 
 <template>
@@ -60,11 +64,11 @@ const { PAGAMENTO_META, formatarDinheiro, formatarData } = useOS()
       />
       <ul v-else class="divide-y divide-default">
         <li
-          v-for="l in faturamento.lancamentos"
+          v-for="l in lancamentosOrdenados"
           :key="l.id"
           class="flex flex-wrap items-center gap-3 py-3 text-sm"
         >
-          <span class="w-24 text-muted">{{ formatarData(l.data) }}</span>
+          <span class="w-32 text-muted">{{ formatarDataHora(l.data) }}</span>
           <UBadge
             :label="l.tipo === 'entrada' ? 'Entrada' : 'Saída'"
             :color="l.tipo === 'entrada' ? 'success' : 'error'"

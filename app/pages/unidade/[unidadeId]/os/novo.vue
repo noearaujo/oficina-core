@@ -44,7 +44,9 @@ function hojeISO() {
   const d = new Date()
   const mes = String(d.getMonth() + 1).padStart(2, '0')
   const dia = String(d.getDate()).padStart(2, '0')
-  return `${d.getFullYear()}-${mes}-${dia}`
+  const hora = String(d.getHours()).padStart(2, '0')
+  const min = String(d.getMinutes()).padStart(2, '0')
+  return `${d.getFullYear()}-${mes}-${dia}T${hora}:${min}`
 }
 
 const schema = z.object({
@@ -150,7 +152,8 @@ const urlNovoVeiculo = computed(() => {
 const enviando = ref(false)
 
 function paraISO(data: string) {
-  return data ? new Date(`${data}T00:00:00`).toISOString() : undefined
+  if (!data) return undefined
+  return new Date(data).toISOString()
 }
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
@@ -329,10 +332,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
               </UFormField>
 
               <UFormField label="Data de entrada" name="dataEntrada" required>
-                <UInput v-model="state.dataEntrada" type="date" />
+                <UInput v-model="state.dataEntrada" type="datetime-local" />
               </UFormField>
               <UFormField label="Previsão de entrega" name="previsaoEntrega">
-                <UInput v-model="state.previsaoEntrega" type="date" />
+                <UInput v-model="state.previsaoEntrega" type="datetime-local" />
               </UFormField>
 
               <UFormField label="Avarias" name="avarias" class="sm:col-span-2">

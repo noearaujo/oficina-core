@@ -132,7 +132,7 @@ async function salvarResumo(payload: { clienteId?: number, veiculoId?: number, f
   if (payload.veiculoId) body.veiculoId = payload.veiculoId
   if (payload.quilometragem) body.quilometragem = Number(payload.quilometragem)
   if (payload.combustivel) body.combustivel = payload.combustivel
-  body.previsaoEntrega = payload.previsaoEntrega ? new Date(`${payload.previsaoEntrega}T00:00:00`).toISOString() : null
+  body.previsaoEntrega = payload.previsaoEntrega ? new Date(payload.previsaoEntrega).toISOString() : null
   if (await executar(() => $fetch(apiBase.value, { method: 'PUT', body }), 'OS atualizada')) {
     modalEditarResumo.value = false
   }

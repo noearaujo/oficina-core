@@ -12,7 +12,7 @@ const emit = defineEmits<{
   'editar-resumo': []
 }>()
 
-const { RESPONSAVEIS, formatarData } = useOS()
+const { RESPONSAVEIS, formatarDataHora } = useOS()
 
 const refQueixa = ref<{ fechar: () => void } | null>(null)
 const refDiagnostico = ref<{ fechar: () => void } | null>(null)
@@ -71,8 +71,8 @@ function salvar(campo: 'queixa' | 'diagnostico' | 'avarias', valor: string, el: 
       <div class="grid grid-cols-2 gap-4">
         <DashboardDataField label="Quilometragem" :value="os.quilometragem !== undefined ? `${os.quilometragem} km` : undefined" />
         <DashboardDataField label="Combustível" :value="os.combustivel" />
-        <DashboardDataField label="Data de entrada" :value="formatarData(os.dataEntrada)" />
-        <DashboardDataField label="Previsão de entrega" :value="formatarData(os.previsaoEntrega)" />
+        <DashboardDataField label="Data de entrada" :value="formatarDataHora(os.dataEntrada)" />
+        <DashboardDataField label="Previsão de entrega" :value="formatarDataHora(os.previsaoEntrega)" />
       </div>
     </UPageCard>
 
