@@ -56,6 +56,14 @@ export const RESPONSAVEIS = [
 
 export const COMBUSTIVEIS = ['E', '1/4', '2/4', '3/4', 'Cheio'].map(v => ({ label: v, value: v }))
 
+export const MODALIDADES_PAGAMENTO_OS = [
+  { label: 'Dinheiro', value: 'dinheiro' },
+  { label: 'Pix', value: 'pix' },
+  { label: 'Crédito', value: 'credito' },
+  { label: 'Débito', value: 'debito' },
+  { label: 'Boleto', value: 'boleto' }
+]
+
 export const TIPO_NOTA: Record<string, { label: string, dot: string }> = {
   item_add: { label: 'Item adicionado', dot: 'bg-info' },
   item_edit: { label: 'Item editado', dot: 'bg-info' },
