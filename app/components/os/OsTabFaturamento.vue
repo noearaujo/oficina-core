@@ -5,10 +5,10 @@ defineProps<{
   faturamento: FaturamentoView
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   lancarPagamento: []
   estornar: [lancamento: LancamentoView]
-  devolver: [lancamento: LancamentoView]
+  devolver: []
 }>()
 
 const { PAGAMENTO_META, formatarDinheiro, formatarData } = useOS()
@@ -17,12 +17,28 @@ const { PAGAMENTO_META, formatarDinheiro, formatarData } = useOS()
 <template>
   <div>
     <DashboardSectionHeader title="Faturamento" description="Posição financeira da OS.">
-      <div class="flex justify-end">
+      <div class="flex items-center justify-end gap-2">
         <UBadge
           v-if="faturamento.badge"
           :label="PAGAMENTO_META[faturamento.badge].label"
           :color="PAGAMENTO_META[faturamento.badge].color"
           variant="subtle"
+        />
+        <UButton
+          v-if="faturamento.saldo > 0"
+          label="Lançar pagamento"
+          icon="i-lucide-plus"
+          size="sm"
+          @click="emit('lancarPagamento')"
+        />
+        <UButton
+          v-if="faturamento.pago > 0"
+          label="Devolver"
+          icon="i-lucide-undo-2"
+          size="sm"
+          color="neutral"
+          variant="outline"
+          @click="emit('devolver')"
         />
       </div>
     </DashboardSectionHeader>
@@ -55,8 +71,23 @@ const { PAGAMENTO_META, formatarDinheiro, formatarData } = useOS()
             :color="l.tipo === 'entrada' ? 'success' : 'error'"
             variant="subtle"
           />
+          <UBadge
+            v-if="l.estornoDe"
+            label="Estornado"
+            color="neutral"
+            variant="subtle"
+          />
           <span class="flex-1 capitalize">{{ l.modalidade }} · {{ l.categoria }}</span>
           <span class="font-medium tabular-nums">{{ formatarDinheiro(l.valor) }}</span>
+          <UButton
+            v-if="l.tipo === 'entrada' && l.categoria === 'pagamento' && !l.estornoDe && !faturamento.lancamentos.some(e => e.estornoDe === l.id)"
+            icon="i-lucide-undo-2"
+            variant="ghost"
+            size="xs"
+            color="error"
+            aria-label="Estornar pagamento"
+            @click="emit('estornar', l)"
+          />
         </li>
       </ul>
     </UPageCard>

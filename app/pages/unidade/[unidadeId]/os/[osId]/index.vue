@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ItemOSView, OSView, StatusOS } from '~/composables/useOS'
+import type { ItemOSView, LancamentoView, OSView, StatusOS } from '~/composables/useOS'
 import { MOTIVO_OS_META, OS_TABS, STATUS_CANCELAVEIS, TRANSICOES, montarDocumentosOS, type TipoMotivoOS } from '~/utils/os-constants'
 
 const route = useRoute()
@@ -32,6 +32,10 @@ const modalEditarResumo = ref(false)
 const enviandoComplementos = ref(false)
 const impressaoRef = ref<{ imprimir: () => void, abrirPreview: (key: string) => void } | null>(null)
 const motivoAtivo = ref<{ tipo: TipoMotivoOS, item?: ItemOSView } | null>(null)
+const modalPagamento = ref(false)
+const modalDevolver = ref(false)
+const lancamentoEstornando = ref<LancamentoView | undefined>()
+const modalEstornar = ref(false)
 
 const modalMotivoAberto = computed({
   get: () => motivoAtivo.value !== null,
@@ -145,6 +149,20 @@ async function enviarOrcamento(canal: 'impressao' | 'imagem') {
     impressaoRef.value?.abrirPreview(typeof lote === 'number' ? `lote-${lote}` : 'principal')
   }
 }
+
+async function lancarPagamento(payload: { valor: number, modalidade: string, carteiraId?: number, sessaoCaixaId?: number, observacao?: string }) {
+  if (await executar(() => post('/pagamento', payload), 'Pagamento registrado')) modalPagamento.value = false
+}
+
+async function estornarPagamento(motivo: string) {
+  const l = lancamentoEstornando.value
+  if (!l) return
+  if (await executar(() => post(`/pagamento/${l.id}/estorno`, { motivo }), 'Pagamento estornado')) modalEstornar.value = false
+}
+
+async function devolver(payload: { valor: number, modalidade: string, carteiraId?: number, sessaoCaixaId?: number, motivo: string }) {
+  if (await executar(() => post('/devolucao', payload), 'Devolução registrada')) modalDevolver.value = false
+}
 </script>
 
 <template>
@@ -207,7 +225,13 @@ async function enviarOrcamento(canal: 'impressao' | 'imagem') {
             @remover-item="removerItem"
             @salvar-desconto="d => executar(() => $fetch(`${apiBase}/desconto`, { method: 'PUT', body: { desconto: d } }), 'Desconto atualizado')"
           />
-          <OsTabFaturamento v-else :faturamento="os.faturamento" />
+          <OsTabFaturamento
+            v-else
+            :faturamento="os.faturamento"
+            @lancar-pagamento="modalPagamento = true"
+            @estornar="l => { lancamentoEstornando = l; modalEstornar = true }"
+            @devolver="modalDevolver = true"
+          />
           <OsHistorico :notas="os.notas" />
         </template>
       </div>
@@ -228,6 +252,32 @@ async function enviarOrcamento(canal: 'impressao' | 'imagem') {
         @confirm="salvarResumo"
       />
       <OsModalMotivo v-model:open="modalMotivoAberto" v-bind="motivoProps" @confirm="confirmarMotivo" />
+      <OsModalPagamento
+        v-if="os"
+        v-model:open="modalPagamento"
+        :unidade-id="unidadeId"
+        :saldo="os.faturamento.saldo"
+        :loading="executando"
+        @confirm="lancarPagamento"
+      />
+      <OsModalDevolucao
+        v-if="os"
+        v-model:open="modalDevolver"
+        :unidade-id="unidadeId"
+        :pago="os.faturamento.pago"
+        :loading="executando"
+        @confirm="devolver"
+      />
+      <OsModalMotivo
+        v-model:open="modalEstornar"
+        title="Estornar pagamento"
+        description="O lançamento será neutralizado no extrato."
+        label="Motivo do estorno"
+        confirm-label="Estornar"
+        color="error"
+        :loading="executando"
+        @confirm="estornarPagamento"
+      />
     </template>
   </UDashboardPanel>
 </template>
