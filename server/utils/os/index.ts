@@ -105,7 +105,16 @@ export async function montarOSDetalhe(
 
 export async function listarOS(
   unidadeId: number,
-  filtros?: { status?: string, q?: string, clienteId?: number, veiculoId?: number, tipo?: string }
+  filtros?: {
+    status?: string
+    q?: string
+    clienteId?: number
+    veiculoId?: number
+    tipo?: string
+    dataInicio?: string
+    dataFim?: string
+    incluirPrevisao?: boolean
+  }
 ): Promise<OrdemServicoDetalhe[]> {
   const [listaOS, itensOS, notas, envios, lancamentos, clientes, veiculos] = await Promise.all([
     db.list<OrdemServico>(unidadeId, 'os', item => !item.deletedAt),
@@ -138,6 +147,21 @@ export async function listarOS(
     if (filtros?.clienteId && Number(os.clienteId) !== Number(filtros.clienteId)) continue
     if (filtros?.veiculoId && Number(os.veiculoId) !== Number(filtros.veiculoId)) continue
     if (filtros?.tipo && os.tipo !== filtros.tipo) continue
+    if (filtros?.dataInicio || filtros?.dataFim) {
+      const noPeriodo = (data?: string) => {
+        if (!data) return false
+        if (filtros.dataInicio && data < filtros.dataInicio) return false
+        if (filtros.dataFim && data > filtros.dataFim) return false
+        return true
+      }
+
+      // Por padrão filtra apenas pela entrada (usado em relatórios).
+      // Se incluirPrevisao for true (Agenda), aceita também OSs com entrega prevista no período.
+      const bateEntrada = noPeriodo(os.dataEntrada)
+      const batePrevisao = filtros.incluirPrevisao ? noPeriodo(os.previsaoEntrega) : false
+
+      if (!bateEntrada && !batePrevisao) continue
+    }
 
     const detalhe = await montarOSDetalhe(unidadeId, os, {
       itensOS,

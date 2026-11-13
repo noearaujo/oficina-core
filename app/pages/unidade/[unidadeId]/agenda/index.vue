@@ -145,7 +145,6 @@ const { data: agendamentos, status: statusAg, error: erroAg, refresh: refreshAg 
   () => `/api/unidade/${unidadeId.value}/agenda`,
   {
     default: () => [],
-    watch: [unidadeId],
     query: computed(() => ({
       dataInicio: periodo.value.inicio.toISOString(),
       dataFim: periodo.value.fim.toISOString()
@@ -155,17 +154,25 @@ const { data: agendamentos, status: statusAg, error: erroAg, refresh: refreshAg 
 
 const { data: listaOS, refresh: refreshOS } = await useFetch<OSView[]>(
   () => `/api/unidade/${unidadeId.value}/os`,
-  { default: () => [], watch: [unidadeId] }
+  {
+    default: () => [],
+    query: computed(() => ({
+      dataInicio: periodo.value.inicio.toISOString(),
+      dataFim: periodo.value.fim.toISOString(),
+      // Busca também OSs que entraram em dias anteriores, mas têm entrega prevista neste período
+      incluirPrevisao: 'true'
+    }))
+  }
 )
 
 const { data: clientes } = await useFetch<Cliente[]>(
   () => `/api/unidade/${unidadeId.value}/clientes`,
-  { default: () => [], watch: [unidadeId] }
+  { default: () => [] }
 )
 
 const { data: veiculos } = await useFetch<Veiculo[]>(
   () => `/api/unidade/${unidadeId.value}/veiculos`,
-  { default: () => [], watch: [unidadeId] }
+  { default: () => [] }
 )
 
 async function recarregar() {
@@ -235,7 +242,7 @@ const eventos = computed<EventoAgenda[]>(() => {
       lista.push({
         ...base,
         key: `os-previsao-${os.id}`,
-        data: new Date(os.previsaoEntrega),
+        data: parseDataLocal(os.previsaoEntrega),
         subtitulo: 'Previsão de entrega',
         rotulo: statusMeta(os.status).label
       })
@@ -273,6 +280,16 @@ function abrirEvento(e: EventoAgenda) {
     return navigateTo(`/unidade/${unidadeId.value}/os/${e.osId}`)
   }
   if (e.agendamento) abrirDetalhe(e.agendamento)
+}
+
+// Se os.previsaoEntrega puder vir sem horário (YYYY-MM-DD), trata antes de criar o Date
+function parseDataLocal(valor: string) {
+  // Se vier apenas YYYY-MM-DD, força horário local (ex.: 17:00) para não voltar 1 dia no fuso UTC-3
+  if (/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
+    const [ano, mes, dia] = valor.split('-').map(Number)
+    return new Date(ano!, mes! - 1, dia!, 17, 0)
+  }
+  return new Date(valor)
 }
 
 // ── Drag-and-drop (remarcar) ──
@@ -505,17 +522,16 @@ const detalheStatus = computed(() => {
               icon="i-lucide-search"
               placeholder="Buscar por cliente, placa ou serviço..."
               class="min-w-64"
+              clearable
             />
-            <div class="flex gap-1">
-              <UButton
-                v-for="v in visoes"
-                :key="v.value"
-                :label="v.label"
-                :color="visao === v.value ? 'primary' : 'neutral'"
-                :variant="visao === v.value ? 'solid' : 'outline'"
-                @click="visao = v.value as Visao"
-              />
-            </div>
+            <UTabs
+              :model-value="visao"
+              :items="visoes"
+              :content="false"
+              variant="pill"
+              size="sm"
+              @update:model-value="(v: any) => visao = v as Visao"
+            />
           </div>
         </div>
 
@@ -564,11 +580,19 @@ const detalheStatus = computed(() => {
               <div
                 v-for="d in dias"
                 :key="`${chaveDia(d)}-${h}`"
-                class="flex min-h-16 flex-col gap-1 border-b border-l border-default p-1"
+                class="group flex min-h-16 flex-col gap-1 border-b border-l border-default p-1"
                 @dragover.prevent
                 @drop.prevent="soltar(d, h)"
                 @dblclick="abrirNovo(new Date(d.getFullYear(), d.getMonth(), d.getDate(), h))"
               >
+                <button
+                  v-if="!eventosDaCelula(d, h).length"
+                  type="button"
+                  class="hidden group-hover:flex w-full items-center justify-center rounded-md py-1 text-xs text-muted hover:bg-elevated/50 hover:text-default"
+                  @click="abrirNovo(new Date(d.getFullYear(), d.getMonth(), d.getDate(), h))"
+                >
+                  + Agendar
+                </button>
                 <button
                   v-for="e in eventosDaCelula(d, h)"
                   :key="e.key"

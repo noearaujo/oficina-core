@@ -18,13 +18,20 @@ export default defineEventHandler(async (event) => {
         : undefined
   const clienteId = query.clienteId ? Number(query.clienteId) : undefined
   const veiculoId = query.veiculoId ? Number(query.veiculoId) : undefined
+  // Usado pela Agenda para incluir OSs pela data de previsão de entrega (relatórios mantêm falso para contar só entradas)
+  const incluirPrevisao = query.incluirPrevisao === 'true' || query.incluirPrevisao === '1'
   const tipo = typeof query.tipo === 'string' ? query.tipo : undefined
+  const dataInicio = typeof query.dataInicio === 'string' ? query.dataInicio : undefined
+  const dataFim = typeof query.dataFim === 'string' ? query.dataFim : undefined
 
   return await listarOS(unidadeId, {
     status,
     q,
     ...(clienteId && Number.isSafeInteger(clienteId) && clienteId > 0 ? { clienteId } : {}),
     ...(veiculoId && Number.isSafeInteger(veiculoId) && veiculoId > 0 ? { veiculoId } : {}),
-    tipo
+    tipo,
+    dataInicio,
+    dataFim,
+    incluirPrevisao
   })
 })
