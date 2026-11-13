@@ -111,7 +111,7 @@ interface StorageShape {
 ```ts
 {
   usuarios: [{ id: 1, nome: "João", email: "joao@oficina.com", senhaHash: "123456", ativo: true }],
-  unidades: [{ id: 1, usuarioId: 1, nome: "Oficina do João", ativo: true, nextOsNumber: 1, nextVendaNumber: 1 }],
+  unidades: [{ id: 1, usuarioId: 1, nome: "Oficina do João", ativo: true, nextOsNumber: 1, nextVendaNumber: 1, lastModified: null }],
   usuarioUnidades: [{ id: 1, usuarioId: 1, unidadeId: 1, role: 'owner', ativo: true }],
   carteiras: [],
   caixas: [{ id: 1, unidadeId: 1, nome: 'Recepção', ativo: true }],
@@ -656,6 +656,7 @@ CREATE TABLE unidades (
   ativo INTEGER NOT NULL DEFAULT 1,
   next_os_number INTEGER NOT NULL DEFAULT 1,
   next_venda_number INTEGER NOT NULL DEFAULT 1,
+  last_modified TEXT,
   criado_em TEXT NOT NULL
 );
 

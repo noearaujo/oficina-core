@@ -226,6 +226,7 @@ interface Unidade {
   ativo: boolean
   nextOsNumber: number     // contador de OS (per-unidade)
   nextVendaNumber: number  // contador de vendas
+  lastModified?: string    // ISO; bump a cada write em qualquer tabela da unidade (sync 304)
   dataCriacao: string
 }
 ```

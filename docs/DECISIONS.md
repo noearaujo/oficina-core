@@ -25,6 +25,7 @@
 | [ADR-013](decisions/013-carteiras-modulo-independente-e-regras.md) | Carteiras como Módulo Próprio e Regras de Integridade | ✅ Aprovado | 05/11/2026 | 1.10 |
 | [ADR-014](decisions/014-ux-detalhe-os-tabs-resumo-historico.md) | Redesenho da Tela de Detalhe da OS (Tabs, Resumo, Histórico e Edição) | ✅ Aprovado | 07/11/2026 | 1.10.2 |
 | [ADR-015](decisions/015-parametros-semanticos-de-rotas.md) | Parâmetros semânticos nas rotas | ✅ Aprovado | 10/11/2026 | — |
+| [ADR-016](decisions/016-sync-polling-304.md) | Sync por Polling + 304 Not Modified | ✅ Aprovado | 13/11/2026 | 1.11 |
 
 ---
 
@@ -32,6 +33,7 @@
 
 | Versão | Data | Alterações | ADRs Relacionados |
 |---|---|---|---|
+| **1.11** | 13/11/2026 | Sync multi-usuario: polling 30s com `visibilityState`, `unidades.last_modified` bumpado a cada write, 304 Not Modified nos endpoints, refetch after action, conflito via 409 na API. Sem WebSocket/SSE no MVP. | [ADR-016](decisions/016-sync-polling-304.md) |
 | **1.10.2** | 07/11/2026 | Tela de detalhe OS: tabs horizontais (pill), transições na navbar #right, Resumo em 4 cards, Histórico compacto (ex-Notas, sem manual, exibe role), Editar Item só qtd+preço, regra de edição por enviado+status. | [ADR-014](decisions/014-ux-detalhe-os-tabs-resumo-historico.md) |
 | **1.10.1** | 05/11/2026 | Correção de resíduos da 1.10: Step 2 do onboarding, StepCarteiras.vue na árvore, descrição do endpoint onboarding. | [ADR-013](decisions/013-carteiras-modulo-independente-e-regras.md) |
 | **1.10** | 05/11/2026 | Carteiras como tela própria (`/carteiras`, G+); onboarding não seeda Carteiras; exclusão A+ com guard (sessão aberta bloqueia; lançamentos → `carteiraId` NULL); rename sem guard (FK por ID); `ON DELETE SET NULL` em `lancamentos.carteira_id` e `sessoes_caixa.carteira_origem_id`. | [ADR-013](decisions/013-carteiras-modulo-independente-e-regras.md) |
@@ -66,6 +68,7 @@
 | PDV Restrito a Produtos | ✅ Aprovado | 1.9 | [ADR-012](decisions/012-pdv-restrito-a-produtos.md) |
 | Carteiras como Módulo Próprio e Integridade Relacional | ✅ Aprovado | 1.10 | [ADR-013](decisions/013-carteiras-modulo-independente-e-regras.md) |
 | Redesenho UX do Detalhe da OS (Tabs, Histórico e Edição) | ✅ Aprovado | 1.10.2 | [ADR-014](decisions/014-ux-detalhe-os-tabs-resumo-historico.md) |
+| Sync Multi-Usuario (Polling 30s + 304 Not Modified) | ✅ Aprovado | 1.11 | [ADR-016](decisions/016-sync-polling-304.md) |
 
 
 ## 015 — Parâmetros semânticos nas rotas
