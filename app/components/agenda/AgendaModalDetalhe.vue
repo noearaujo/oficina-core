@@ -53,6 +53,8 @@ const detalheStatus = computed(() => {
   return s === 'realizado' ? 'Realizado' : s === 'cancelado' ? 'Cancelado' : 'Agendado'
 })
 
+const minDataHora = computed(() => format(new Date(), 'yyyy-MM-dd\'T\'HH:mm'))
+
 function abrir(ag: AgendamentoView) {
   mostrandoRemarcar.value = false
   remarcar.dataHora = format(new Date(ag.dataHora), 'yyyy-MM-dd\'T\'HH:mm')
@@ -106,6 +108,15 @@ async function cancelarSelecionado(): Promise<boolean> {
 async function converterSelecionado() {
   const ag = props.agendamento
   if (!ag) return
+
+  if (new Date(ag.dataHora) > new Date()) {
+    toast.add({
+      title: 'Não permitido',
+      description: 'O agendamento ainda está no futuro. Converta quando o veículo chegar.',
+      color: 'error'
+    })
+    return
+  }
 
   const veiculoId = ag.veiculoId ?? remarcar.veiculoId
   if (!veiculoId) {
@@ -195,7 +206,7 @@ defineExpose({ abrir })
 
         <div v-if="mostrandoRemarcar" class="flex flex-col gap-3 rounded-lg bg-elevated/50 p-3">
           <UFormField label="Remarcar para">
-            <UInput v-model="remarcar.dataHora" type="datetime-local" />
+            <UInput v-model="remarcar.dataHora" type="datetime-local" :min="minDataHora" />
           </UFormField>
           <UFormField v-if="!agendamento.veiculoId" label="Veículo">
             <USelect

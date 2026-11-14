@@ -13,7 +13,7 @@ const unidadeId = computed(() => String(route.params.unidadeId ?? ''))
 const { statusMeta, erroMensagem } = useOS()
 
 type Visao = 'dia' | 'semana' | 'mes'
-type Cor = 'azul' | 'violeta' | 'ambar' | 'verde' | 'cinza'
+type Cor = 'azul' | 'violeta' | 'ambar' | 'verde' | 'cinza' | 'vermelho'
 
 interface EventoAgenda {
   key: string
@@ -33,7 +33,8 @@ const COR_CLASSES: Record<Cor, { bloco: string, dot: string }> = {
   violeta: { bloco: 'bg-violet-500/15 text-violet-700 ring ring-inset ring-violet-500/30 dark:text-violet-300', dot: 'bg-violet-500' },
   ambar: { bloco: 'bg-amber-500/15 text-amber-700 ring ring-inset ring-amber-500/30 dark:text-amber-300', dot: 'bg-amber-500' },
   verde: { bloco: 'bg-green-500/15 text-green-700 ring ring-inset ring-green-500/30 dark:text-green-300', dot: 'bg-green-500' },
-  cinza: { bloco: 'bg-neutral-500/10 text-muted ring ring-inset ring-neutral-500/25', dot: 'bg-neutral-400' }
+  cinza: { bloco: 'bg-neutral-500/10 text-muted ring ring-inset ring-neutral-500/25', dot: 'bg-neutral-400' },
+  vermelho: { bloco: 'bg-red-500/15 text-red-700 ring ring-inset ring-red-500/30 dark:text-red-300', dot: 'bg-red-500' }
 }
 
 const LEGENDA: { cor: Cor, label: string }[] = [
@@ -41,7 +42,8 @@ const LEGENDA: { cor: Cor, label: string }[] = [
   { cor: 'violeta', label: 'Em diagnóstico' },
   { cor: 'ambar', label: 'Aguardando' },
   { cor: 'verde', label: 'Em execução / Concluída' },
-  { cor: 'cinza', label: 'Entregue / Cancelado' }
+  { cor: 'cinza', label: 'Entregue / Cancelado' },
+  { cor: 'vermelho', label: 'Atrasada' }
 ]
 
 const HORAS = Array.from({ length: 11 }, (_, i) => i + 8) // 08:00 → 18:00
@@ -264,12 +266,15 @@ const eventos = computed<EventoAgenda[]>(() => {
       })
     }
     if (['em_execucao', 'concluida'].includes(os.status) && os.previsaoEntrega) {
+      const dataPrevista = parseDataLocal(os.previsaoEntrega)
+      const atrasada = os.status === 'em_execucao' && dataPrevista < now.value
       lista.push({
         ...base,
         key: `os-previsao-${os.id}`,
-        data: parseDataLocal(os.previsaoEntrega),
+        data: dataPrevista,
         subtitulo: 'Previsão de entrega',
-        rotulo: statusMeta(os.status).label
+        rotulo: atrasada ? 'Atrasada' : statusMeta(os.status).label,
+        cor: atrasada ? 'vermelho' : corOS(os.status)
       })
     }
   }
@@ -334,6 +339,11 @@ async function soltar(dia: Date, hora: number) {
   const atual = new Date(ag.dataHora)
   const nova = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate(), hora, atual.getMinutes())
   if (nova.getTime() === atual.getTime()) return
+
+  if (nova < now.value) {
+    toast.add({ title: 'Não permitido', description: 'Não é possível remarcar para um horário no passado.', color: 'error' })
+    return
+  }
 
   // Verifica conflito: outro agendamento na mesma célula
   const conflito = (agendamentos.value ?? []).some(
